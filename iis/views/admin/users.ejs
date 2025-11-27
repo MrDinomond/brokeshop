@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="/shop">Магазин</a>
+                </div>
+
+                <div class="nav-menu">
+                    <div class="nav-user">
+                        <span>Привет, <%= user %> (<%= userRole %>)!</span>
+                        <div class="nav-links">
+                            <a href="/shop" class="nav-link">
+                                <i class="fas fa-store"></i> Товары
+                            </a>
+                            <a href="/cart" class="nav-link">
+                                <i class="fas fa-shopping-cart"></i> Корзина
+                                <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+                                    <span class="cart-count"><%= cartCount %></span>
+                                <% } %>
+                            </a>
+                            <a href="/cart/orders" class="nav-link">
+                                <i class="fas fa-clipboard-list"></i> Заказы
+                            </a>
+                            <a href="/admin" class="nav-link active">
+                                <i class="fas fa-cog"></i> Админка
+                            </a>
+                            <form action="/auth/logout" method="POST" style="display: inline;">
+                                <button type="submit" class="nav-link logout-btn">
+                                    <i class="fas fa-sign-out-alt"></i> Выйти
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="admin-container">
+            <div class="admin-sidebar">
+                <h2>Панель управления</h2>
+                <nav class="admin-nav">
+                    <a href="/admin" class="admin-nav-item">
+                        <i class="fas fa-tachometer-alt"></i> Обзор
+                    </a>
+                    <a href="/admin/users" class="admin-nav-item active">
+                        <i class="fas fa-users"></i> Пользователи
+                    </a>
+                    <a href="/admin/orders" class="admin-nav-item">
+                        <i class="fas fa-clipboard-list"></i> Заказы
+                    </a>
+                    <a href="/admin/products" class="admin-nav-item">
+                        <i class="fas fa-box"></i> Товары
+                    </a>
+                </nav>
+            </div>
+
+            <div class="admin-content">
+                <div class="admin-header">
+                    <h1>Управление пользователями</h1>
+                    <div class="admin-breadcrumb">
+                        <a href="/admin">Главная</a> / <span>Пользователи</span>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2>Все пользователи</h2>
+                        <p>Управление ролями и правами пользователей</p>
+                    </div>
+
+                    <% if (typeof error !== 'undefined' && error.length > 0) { %>
+                        <div class="alert alert-error">
+                            <%= error %>
+                        </div>
+                    <% } %>
+
+                    <% if (typeof success !== 'undefined' && success.length > 0) { %>
+                        <div class="alert alert-success">
+                            <%= success %>
+                        </div>
+                    <% } %>
+
+                    <div class="users-table-container">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Имя пользователя</th>
+                                    <th>Email</th>
+                                    <th>Роль</th>
+                                    <th>Дата регистрации</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% users.forEach(user => { %>
+                                    <tr>
+                                        <td><%= user.id %></td>
+                                        <td><%= user.username %></td>
+                                        <td><%= user.email %></td>
+                                        <td>
+                                            <form action="/admin/users/<%= user.id %>/role" method="POST" class="role-form">
+                                                <select name="role" onchange="this.form.submit()" class="role-select">
+                                                    <option value="user" <%= user.role === 'user' ? 'selected' : '' %>>Пользователь</option>
+                                                    <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>Администратор</option>
+                                                    <option value="root" <%= user.role === 'root' ? 'selected' : '' %>>Супер-админ</option>
+                                                </select>
+                                            </form>
+                                        </td>
+                                        <td><%= new Date(user.created_at).toLocaleDateString('ru-RU') %></td>
+                                        <td>
+                                            <a href="/admin/users/<%= user.id %>" class="action-btn view-btn" title="Просмотр профиля">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <% if (user.id !== currentUserId && (userRole === 'root' || user.role !== 'root')) { %>
+                                                <form action="/admin/users/<%= user.id %>/delete" method="POST" style="display: inline;" onsubmit="return confirm('Вы уверены, что хотите удалить пользователя <%= user.username %>?')">
+                                                    <button type="submit" class="action-btn delete-btn" title="Удалить пользователя">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2024 Простой Магазин. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+    // Инициализация темы для админ-панели пользователей
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTheme();
+        console.log('Users admin theme initialized:', localStorage.getItem('theme') || 'light');
+    });
+    </script>
+        .users-table-container {
+            overflow-x: auto;
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .users-table th {
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .users-table td {
+            color: var(--text-color);
+        }
+
+        .role-form {
+            margin: 0;
+        }
+
+        .role-select {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .role-select:focus {
+            outline: none;
+            border-color: var(--button-bg);
+        }
+
+        /* Дополнительные стили для темной темы */
+        [data-theme="dark"] .role-select {
+            background: var(--input-bg) !important;
+            color: var(--text-color) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .role-select:focus {
+            border-color: var(--button-bg) !important;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .view-btn {
+            color: var(--button-bg);
+        }
+
+        .delete-btn {
+            color: #e74c3c;
+        }
+
+        .delete-btn:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        /* Поддержка темной темы */
+        [data-theme="dark"] .delete-btn {
+            color: #e74c3c;
+        }
+
+        [data-theme="dark"] .delete-btn:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-header h2 {
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .section-header p {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+    </style>
+</body>
+</html>

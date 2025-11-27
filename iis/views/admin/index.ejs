@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="/shop">Магазин</a>
+                </div>
+
+                <div class="nav-menu">
+                    <div class="nav-user">
+                        <span>Привет, <%= user %> (<%= userRole %>)!</span>
+                        <div class="nav-links">
+                            <a href="/shop" class="nav-link">
+                                <i class="fas fa-store"></i> Товары
+                            </a>
+                            <a href="/cart" class="nav-link">
+                                <i class="fas fa-shopping-cart"></i> Корзина
+                                <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+                                    <span class="cart-count"><%= cartCount %></span>
+                                <% } %>
+                            </a>
+                            <a href="/cart/orders" class="nav-link">
+                                <i class="fas fa-clipboard-list"></i> Заказы
+                            </a>
+                            <a href="/admin" class="nav-link active">
+                                <i class="fas fa-cog"></i> Админка
+                            </a>
+                            <form action="/auth/logout" method="POST" style="display: inline;">
+                                <button type="submit" class="nav-link logout-btn">
+                                    <i class="fas fa-sign-out-alt"></i> Выйти
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="admin-container">
+            <div class="admin-sidebar">
+                <h2>Панель управления</h2>
+                <nav class="admin-nav">
+                    <a href="/admin" class="admin-nav-item active">
+                        <i class="fas fa-tachometer-alt"></i> Обзор
+                    </a>
+                    <% if (userRole === 'root') { %>
+                    <a href="/admin/users" class="admin-nav-item">
+                        <i class="fas fa-users"></i> Пользователи
+                    </a>
+                    <a href="/admin/orders" class="admin-nav-item">
+                        <i class="fas fa-clipboard-list"></i> Заказы
+                    </a>
+                    <a href="/admin/products" class="admin-nav-item">
+                        <i class="fas fa-box"></i> Товары
+                    </a>
+                    <% } %>
+                    <a href="/admin/reviews" class="admin-nav-item">
+                        <i class="fas fa-comments"></i> Отзывы
+                    </a>
+                </nav>
+            </div>
+
+            <div class="admin-content">
+                <div class="admin-header">
+                    <h1>Обзор</h1>
+                    <div class="admin-breadcrumb">
+                        <span>Главная</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><%= stats.totalUsers %></h3>
+                            <p>Всего пользователей</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><%= stats.totalOrders %></h3>
+                            <p>Всего заказов</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><%= stats.totalProducts %></h3>
+                            <p>Всего товаров</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><%= stats.completedOrders %></h3>
+                            <p>Завершенные заказы</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><%= stats.pendingOrders %></h3>
+                            <p>Ожидают обработки</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-sections">
+                    <div class="admin-section">
+                        <h2>Управление данными</h2>
+                        <div class="quick-actions">
+                            <button class="quick-action-btn" onclick="exportData()">
+                                <i class="fas fa-download"></i>
+                                Экспортировать данные
+                            </button>
+                            <button class="quick-action-btn" onclick="importData()">
+                                <i class="fas fa-upload"></i>
+                                Импортировать данные
+                            </button>
+                            <% if (userRole === 'root') { %>
+                            <a href="/admin/products" class="quick-action-btn">
+                                <i class="fas fa-box"></i>
+                                Управление товарами
+                            </a>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h2>Последние заказы</h2>
+                        <div class="recent-orders">
+                            <% if (orders && orders.length > 0) { %>
+                                <% orders.forEach(order => { %>
+                                    <div class="order-item">
+                                        <div class="order-info">
+                                            <span class="order-id">Заказ #<%= order.id %></span>
+                                            <span class="order-user"><%= order.username %></span>
+                                            <span class="order-date"><%= new Date(order.created_at).toLocaleDateString('ru-RU') %></span>
+                                        </div>
+                                        <div class="order-total">
+                                            <%= order.total %> ₽
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            <% } else { %>
+                                <p>Нет недавних заказов для отображения.</p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Простой Магазин. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+    // Инициализация темы для админ-панели
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTheme();
+        console.log('Admin theme initialized:', localStorage.getItem('theme') || 'light');
+    });
+    </script>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Корзина</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/cart.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="/shop">Магазин</a>
+                </div>
+
+                <div class="nav-menu">
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <div class="nav-user">
+                            <span>Привет, <%= user %>!</span>
+                            <div class="nav-links">
+                                <a href="/shop" class="nav-link">
+                                    <i class="fas fa-store"></i> Товары
+                                </a>
+                                <a href="/cart" class="nav-link">
+                                    <i class="fas fa-shopping-cart"></i> Корзина
+                                    <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+                                        <span class="cart-count"><%= cartCount %></span>
+                                    <% } %>
+                                </a>
+                                <% if (typeof userRole !== 'undefined' && (userRole === 'admin' || userRole === 'root')) { %>
+                                    <a href="/admin" class="nav-link">
+                                        <i class="fas fa-cog"></i> Админка
+                                    </a>
+                                <% } %>
+                                <form action="/auth/logout" method="POST" style="display: inline;">
+                                    <button type="submit" class="nav-link logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Выйти
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <div class="nav-links">
+                            <a href="/auth/login" class="nav-link">Вход</a>
+                            <a href="/auth/register" class="nav-link">Регистрация</a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <% if (typeof error !== 'undefined' && error.length > 0) { %>
+            <div class="alert alert-error">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <% if (typeof success !== 'undefined' && success.length > 0) { %>
+            <div class="alert alert-success">
+                <%= success %>
+            </div>
+        <% } %>
+
+        <div class="cart-container">
+            <h1>Корзина</h1>
+
+            <% if (cartItems.length === 0) { %>
+                <div class="empty-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <h2>Корзина пуста</h2>
+                    <p>Добавьте товары в корзину для оформления заказа</p>
+                    <a href="/shop" class="shop-btn">Перейти к покупкам</a>
+                </div>
+            <% } else { %>
+                <div class="cart-items">
+                    <% cartItems.forEach(item => { %>
+                        <div class="cart-item">
+                            <div class="cart-item-image">
+                                <img src="/images/<%= item.image %>" alt="<%= item.name %>">
+                            </div>
+
+                            <div class="cart-item-info">
+                                <h3><%= item.name %></h3>
+                                <p class="cart-item-price"><%= item.price %> ₽</p>
+                            </div>
+
+                            <div class="cart-item-quantity">
+                                <form action="/cart/update/<%= item.product_id %>" method="POST" class="quantity-form" onsubmit="return updateQuantity(this, event)">
+                                    <input type="hidden" name="_method" value="POST">
+                                    <button type="button" class="quantity-btn" onclick="changeQuantity(this, -1)" aria-label="Уменьшить количество">-</button>
+                                    <input type="number" 
+                                           name="quantity" 
+                                           value="<%= item.quantity %>" 
+                                           min="1" 
+                                           class="quantity-input" 
+                                           onchange="this.form.submit()"
+                                           aria-label="Количество товара">
+                                    <button type="button" class="quantity-btn" onclick="changeQuantity(this, 1)" aria-label="Увеличить количество">+</button>
+                                </form>
+                            </div>
+
+                            <div class="cart-item-total">
+                                <%= (item.price * item.quantity) %> ₽
+                            </div>
+
+                            <div class="cart-item-actions">
+                                <form onsubmit="return submitForm(this, 'DELETE')" action="/cart/remove/<%= item.product_id %>" method="POST">
+                                    <button type="submit" class="remove-btn">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <div class="cart-summary">
+                    <div class="cart-total">
+                        <strong>Итого: <%= total %> ₽</strong>
+                    </div>
+
+                    <div class="cart-actions">
+                        <form onsubmit="return submitForm(this, 'DELETE')" action="/cart/clear" method="POST" style="display: inline;">
+                            <button type="submit" class="clear-cart-btn">Очистить корзину</button>
+                        </form>
+                        <a href="/cart/checkout" class="checkout-btn">
+                            <i class="fas fa-credit-card"></i>
+                            Оформить заказ
+                        </a>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2024 Простой Магазин. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+    // Инициализация темы для корзины
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTheme();
+        console.log('Cart theme initialized:', localStorage.getItem('theme') || 'light');
+    });
+
+    function changeQuantity(button, change) {
+        const form = button.closest('.quantity-form');
+        const input = form.querySelector('input[name="quantity"]');
+        let newValue = parseInt(input.value) + change;
+        
+        // Ensure the quantity is at least 1
+        newValue = Math.max(1, newValue);
+        
+        // Update the input value and trigger change event
+        input.value = newValue;
+        const event = new Event('change');
+        input.dispatchEvent(event);
+    }
+    
+    function updateQuantity(form, event) {
+        if (event) {
+            event.preventDefault();
+        }
+        submitForm(form, 'POST');
+        return false;
+    }
+    
+    function submitForm(form, method) {
+        // Create a hidden input for the method if it's not GET or POST
+        if (method && method !== 'GET' && method !== 'POST') {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = '_method';
+            input.value = method;
+            form.appendChild(input);
+        }
+        
+        // Submit the form
+        form.submit();
+        return false;
+    }
+    </script>
+</body>
+</html>

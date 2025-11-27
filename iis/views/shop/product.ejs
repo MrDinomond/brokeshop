@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= product.name %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/product.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="/shop">Магазин</a>
+                </div>
+
+                <div class="nav-menu">
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <div class="nav-user">
+                            <span>Привет, <%= user %>!</span>
+                            <div class="nav-links">
+                                <a href="/shop" class="nav-link">
+                                    <i class="fas fa-store"></i> Товары
+                                </a>
+                                <a href="/cart" class="nav-link">
+                                    <i class="fas fa-shopping-cart"></i> Корзина
+                                    <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+                                        <span class="cart-count"><%= cartCount %></span>
+                                    <% } %>
+                                </a>
+                                <% if (typeof userRole !== 'undefined' && (userRole === 'admin' || userRole === 'root')) { %>
+                                    <a href="/admin" class="nav-link">
+                                        <i class="fas fa-cog"></i> Админка
+                                    </a>
+                                <% } %>
+                                <form action="/auth/logout" method="POST" style="display: inline;">
+                                    <button type="submit" class="nav-link logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Выйти
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <div class="nav-links">
+                            <a href="/auth/login" class="nav-link">Вход</a>
+                            <a href="/auth/register" class="nav-link">Регистрация</a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <% if (typeof error !== 'undefined' && error.length > 0) { %>
+            <div class="alert alert-error">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <% if (typeof success !== 'undefined' && success.length > 0) { %>
+            <div class="alert alert-success">
+                <%= success %>
+            </div>
+        <% } %>
+
+        <div class="product-detail-container">
+            <div class="product-detail">
+                <div class="product-detail-image">
+                    <% if (product.image) { %>
+                        <% const imgSrc = product.image.startsWith('/images/') ? product.image : `/images/${product.image}`; %>
+                        <img src="<%= imgSrc %>" alt="<%= product.name %>" onerror="this.onerror=null; this.src='/images/default.jpg';">
+                    <% } else { %>
+                        <div class="no-image">
+                            <i class="fas fa-image"></i>
+                            <span>Нет изображения</span>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="product-detail-info">
+                    <h1><%= product.name %></h1>
+                    <p class="product-description"><%= product.description %></p>
+
+                    <div class="product-meta">
+                        <span class="product-price"><%= product.price %> ₽</span>
+                        <% if (rating && rating.avg_rating > 0) { %>
+                            <div class="product-rating">
+                                <div class="rating-stars">
+                                    <% for (let i = 1; i <= 5; i++) { %>
+                                        <% if (i <= Math.floor(rating.avg_rating)) { %>
+                                            <i class="fas fa-star"></i>
+                                        <% } else if (i - 0.5 <= rating.avg_rating) { %>
+                                            <i class="fas fa-star-half-alt"></i>
+                                        <% } else { %>
+                                            <i class="far fa-star"></i>
+                                        <% } %>
+                                    <% } %>
+                                </div>
+                                <span class="rating-text"><%= rating.avg_rating %> (<%= rating.review_count %> отзывов)</span>
+                            </div>
+                        <% } else { %>
+                            <div class="product-rating">
+                                <span class="rating-text">Пока нет отзывов</span>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <div class="product-actions">
+                        <form action="/cart/add/<%= product.id %>" method="POST" class="add-to-cart-form">
+                            <div class="quantity-selector">
+                                <label for="quantity">Количество:</label>
+                                <input type="number" id="quantity" name="quantity" value="1" min="1" max="99">
+                            </div>
+                            <button type="submit" class="add-to-cart-btn-large">
+                                <i class="fas fa-cart-plus"></i>
+                                Добавить в корзину
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="back-link">
+                        <a href="/shop">&larr; Вернуться к товарам</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Раздел отзывов -->
+            <div class="reviews-section">
+                <h2>Отзывы</h2>
+
+                <!-- Форма для создания отзыва -->
+                <% if (typeof user !== 'undefined' && user && !hasReviewed) { %>
+                    <div class="review-form-container">
+                        <h3>Оставить отзыв</h3>
+                        <form id="reviewForm" class="review-form">
+                            <input type="hidden" name="productId" value="<%= product.id %>">
+                            <div class="form-group">
+                                <label for="rating">Рейтинг:</label>
+                                <div class="rating-input">
+                                    <% for (let i = 5; i >= 1; i--) { %>
+                                        <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>" required>
+                                        <label for="star<%= i %>">
+                                            <i class="fas fa-star"></i>
+                                        </label>
+                                    <% } %>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="comment">Ваш отзыв: <span style="color: var(--text-color); opacity: 0.6; font-weight: normal;">(необязательно)</span></label>
+                                <textarea id="comment" name="comment" rows="4" placeholder="Поделитесь своим мнением о товаре... (или просто поставьте оценку)"></textarea>
+                            </div>
+                            
+                            <div id="reviewMessage" class="alert" style="display: none; margin-bottom: 1rem;"></div>
+
+                            <button type="submit" class="submit-review-btn">
+                                <i class="fas fa-paper-plane"></i>
+                                <span id="submitText">Отправить на модерацию</span>
+                                <span id="loadingSpinner" style="display: none;"><i class="fas fa-spinner fa-spin"></i></span>
+                            </button>
+                        </form>
+                        
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const reviewForm = document.getElementById('reviewForm');
+                            if (!reviewForm) return;
+                            
+                            reviewForm.addEventListener('submit', async function(e) {
+                                e.preventDefault();
+                                
+                                const form = e.target;
+                                const submitBtn = form.querySelector('button[type="submit"]');
+                                const submitText = document.getElementById('submitText');
+                                const loadingSpinner = document.getElementById('loadingSpinner');
+                                const messageDiv = document.getElementById('reviewMessage');
+                                
+                                // Показываем индикатор загрузки
+                                submitBtn.disabled = true;
+                                submitText.textContent = 'Отправка...';
+                                if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
+                                if (messageDiv) messageDiv.style.display = 'none';
+                                
+                                try {
+                                    const ratingInput = form.querySelector('input[name="rating"]:checked');
+                                    const commentInput = form.querySelector('textarea[name="comment"]');
+                                    
+                                    if (!ratingInput) {
+                                        throw new Error('Пожалуйста, выберите оценку');
+                                    }
+                                    
+                                    const response = await fetch(`/shop/product/${form.productId.value}/review`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Accept': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            rating: ratingInput.value,
+                                            comment: commentInput ? commentInput.value : ''
+                                        })
+                                    });
+                                    
+                                    const result = await response.json();
+                                    
+                                    if (response.ok) {
+                                        // Показываем сообщение об успехе
+                                        if (messageDiv) {
+                                            messageDiv.textContent = result.message || 'Отзыв успешно отправлен на модерацию';
+                                            messageDiv.className = 'alert alert-success';
+                                            messageDiv.style.display = 'block';
+                                        }
+                                        
+                                        // Очищаем форму
+                                        form.reset();
+                                        
+                                        // Обновляем страницу через 2 секунды, чтобы показать новый отзыв
+                                        setTimeout(() => {
+                                            location.reload();
+                                        }, 2000);
+                                    } else {
+                                        // Показываем сообщение об ошибке
+                                        if (messageDiv) {
+                                            messageDiv.textContent = result.error || 'Произошла ошибка при отправке отзыва';
+                                            messageDiv.className = 'alert alert-error';
+                                            messageDiv.style.display = 'block';
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error('Ошибка при отправке отзыва:', error);
+                                    if (messageDiv) {
+                                        messageDiv.textContent = error.message || 'Произошла ошибка при отправке отзыва';
+                                        messageDiv.className = 'alert alert-error';
+                                        messageDiv.style.display = 'block';
+                                    }
+                                } finally {
+                                    // Восстанавливаем кнопку
+                                    if (submitBtn) submitBtn.disabled = false;
+                                    if (submitText) submitText.textContent = 'Отправить на модерацию';
+                                    if (loadingSpinner) loadingSpinner.style.display = 'none';
+                                    
+                                    // Прокручиваем к сообщению, если оно есть
+                                    if (messageDiv && messageDiv.style.display === 'block') {
+                                        messageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }
+                                }
+                            });
+                        });
+                        </script>
+                    </div>
+                <% } else if (hasReviewed) { %>
+                    <div class="review-status">
+                        <i class="fas fa-info-circle"></i>
+                        Вы уже оставляли отзыв на этот товар
+                    </div>
+                <% } %>
+
+                <!-- Список отзывов -->
+                <div class="reviews-list">
+                    <% if (reviews && reviews.length > 0) { %>
+                        <h3>Отзывы покупателей (<%= reviews.length %>)</h3>
+                        <% reviews.forEach(review => { %>
+                            <div class="review-item">
+                                <div class="review-header">
+                                    <div class="review-author">
+                                        <i class="fas fa-user"></i>
+                                        <span><%= review.username %></span>
+                                    </div>
+                                    <div class="review-rating">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <% if (i <= review.rating) { %>
+                                                <i class="fas fa-star"></i>
+                                            <% } else { %>
+                                                <i class="far fa-star"></i>
+                                            <% } %>
+                                        <% } %>
+                                    </div>
+                                    <div class="review-date">
+                                        <%= new Date(review.created_at).toLocaleDateString('ru-RU') %>
+                                    </div>
+                                </div>
+                                <div class="review-content">
+                                    <p><%= review.comment %></p>
+                                </div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <div class="no-reviews">
+                            <i class="fas fa-comments"></i>
+                            <p>Пока нет отзывов. Будьте первым!</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2024 Простой Магазин. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+    // Инициализация темы
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTheme();
+        console.log('Product page theme initialized:', localStorage.getItem('theme') || 'light');
+
+        // Интерактивный рейтинг для формы отзыва
+        const ratingInputs = document.querySelectorAll('.rating-input input[type="radio"]');
+        ratingInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                // Снимаем выделение со всех звезд
+                ratingInputs.forEach(i => {
+                    i.nextElementSibling.style.color = '#ddd';
+                });
+
+                // Выделяем выбранные звезды
+                for (let i = 1; i <= this.value; i++) {
+                    const star = document.querySelector(`input[value="${i}"] + label`);
+                    if (star) star.style.color = '#ffd700';
+                }
+            });
+        });
+    });
+    </script>
+
+    <style>
+        /* Стили для отзывов */
+        .reviews-section {
+            max-width: 1200px;
+            margin: 3rem auto 0;
+            padding: 0 1rem;
+        }
+
+        .reviews-section h2 {
+            color: var(--text-color);
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        /* Форма отзыва */
+        .review-form-container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 3rem;
+        }
+
+        .review-form-container h3 {
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .review-form .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .review-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        /* Интерактивный рейтинг */
+        .rating-input {
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 0.2rem;
+        }
+
+        .rating-input input[type="radio"] {
+            display: none;
+        }
+
+        .rating-input label {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #ddd;
+            transition: color 0.3s;
+        }
+
+        .rating-input input:checked ~ label,
+        .rating-input label:hover,
+        .rating-input label:hover ~ label {
+            color: #ffd700;
+        }
+
+        .review-form textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            resize: vertical;
+            min-height: 100px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        .review-form textarea:focus {
+            outline: none;
+            border-color: var(--button-bg);
+        }
+
+        .submit-review-btn {
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .submit-review-btn:hover {
+            background: var(--button-hover);
+        }
+
+        /* Статус отзыва */
+        .review-status {
+            background: var(--alert-info-bg);
+            color: var(--alert-info-text);
+            border: 1px solid var(--alert-info-border);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Список отзывов */
+        .reviews-list h3 {
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .review-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .review-author {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .review-author i {
+            color: var(--button-bg);
+        }
+
+        .review-rating {
+            display: flex;
+            gap: 0.1rem;
+        }
+
+        .review-rating i {
+            color: #ffd700;
+            font-size: 0.9rem;
+        }
+
+        .review-date {
+            color: var(--text-color);
+            opacity: 0.6;
+            font-size: 0.8rem;
+        }
+
+        .review-content {
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        .review-content p {
+            margin: 0;
+        }
+
+        /* Нет отзывов */
+        .no-reviews {
+            text-align: center;
+            padding: 3rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        .no-reviews i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--border-color);
+        }
+
+
+        .rating-text {
+            color: var(--text-color);
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        /* Поддержка темной темы */
+        [data-theme="dark"] .review-form-container,
+        [data-theme="dark"] .review-item,
+        [data-theme="dark"] .no-reviews {
+            background: var(--card-bg);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .rating-input label {
+            color: #444;
+        }
+
+        [data-theme="dark"] .rating-input input:checked ~ label,
+        [data-theme="dark"] .rating-input label:hover,
+        [data-theme="dark"] .rating-input label:hover ~ label {
+            color: #ffd700;
+        }
+
+        /* Мобильная адаптивность */
+        @media (max-width: 768px) {
+            .reviews-section {
+                padding: 0 0.5rem;
+            }
+
+            .review-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .review-form-container {
+                padding: 1.5rem;
+            }
+
+            .rating-input {
+                justify-content: center;
+            }
+        }
+    </style>
+</body>
+</html>

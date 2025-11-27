@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+
+    <%- include('../partials/admin-nav') %>
+
+    <main>
+        <% if (typeof error !== 'undefined' && error.length > 0) { %>
+            <div class="alert alert-error">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <% if (typeof success !== 'undefined' && success.length > 0) { %>
+            <div class="alert alert-success">
+                <%= success %>
+            </div>
+        <% } %>
+
+        <div class="admin-container">
+            <div class="admin-header">
+                <h1><i class="fas fa-comments"></i> Все отзывы</h1>
+                <div class="admin-actions">
+                    <a href="/admin/reviews" class="btn">
+                        <i class="fas fa-clock"></i> На модерацию
+                    </a>
+                    <a href="/admin" class="btn">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </a>
+                </div>
+            </div>
+
+            <div class="reviews-all">
+                <% if (reviews && reviews.length > 0) { %>
+                    <div class="reviews-stats">
+                        <div class="stat-card">
+                            <i class="fas fa-comments"></i>
+                            <div class="stat-info">
+                                <span class="stat-number"><%= reviews.length %></span>
+                                <span class="stat-label">Всего отзывов</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-check-circle"></i>
+                            <div class="stat-info">
+                                <span class="stat-number"><%= reviews.filter(r => r.status === 'approved').length %></span>
+                                <span class="stat-label">Одобрено</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-clock"></i>
+                            <div class="stat-info">
+                                <span class="stat-number"><%= reviews.filter(r => r.status === 'pending').length %></span>
+                                <span class="stat-label">На модерации</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-times-circle"></i>
+                            <div class="stat-info">
+                                <span class="stat-number"><%= reviews.filter(r => r.status === 'rejected').length %></span>
+                                <span class="stat-label">Отклонено</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reviews-filter">
+                        <div class="filter-buttons">
+                            <a href="/admin/reviews/all" class="filter-btn active">Все</a>
+                            <a href="/admin/reviews/all?status=approved" class="filter-btn">Одобренные</a>
+                            <a href="/admin/reviews/all?status=pending" class="filter-btn">На модерации</a>
+                            <a href="/admin/reviews/all?status=rejected" class="filter-btn">Отклоненные</a>
+                        </div>
+                    </div>
+
+                    <div class="reviews-list">
+                        <% reviews.forEach(review => { %>
+                            <div class="review-card review-status-<%= review.status %>">
+                                <div class="review-header">
+                                    <div class="review-info">
+                                        <h3><%= review.product_name %></h3>
+                                        <div class="review-meta">
+                                            <span class="review-author">
+                                                <i class="fas fa-user"></i>
+                                                <%= review.username %>
+                                            </span>
+                                            <span class="review-date">
+                                                <i class="fas fa-calendar"></i>
+                                                <%= new Date(review.created_at).toLocaleString('ru-RU') %>
+                                            </span>
+                                            <% if (review.moderated_at) { %>
+                                                <span class="review-moderated">
+                                                    <i class="fas fa-gavel"></i>
+                                                    Модерация: <%= new Date(review.moderated_at).toLocaleString('ru-RU') %>
+                                                </span>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    <div class="review-status-badge">
+                                        <span class="status-badge status-<%= review.status %>">
+                                            <%= review.status === 'pending' ? 'На модерации' :
+                                               review.status === 'approved' ? 'Одобрен' :
+                                               review.status === 'rejected' ? 'Отклонен' : review.status %>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="review-rating">
+                                    <% for (let i = 1; i <= 5; i++) { %>
+                                        <% if (i <= review.rating) { %>
+                                            <i class="fas fa-star"></i>
+                                        <% } else { %>
+                                            <i class="far fa-star"></i>
+                                        <% } %>
+                                    <% } %>
+                                    <span class="rating-number"><%= review.rating %>/5</span>
+                                </div>
+
+                                <div class="review-content">
+                                    <p><%= review.comment %></p>
+                                </div>
+
+                                <div class="review-actions">
+                                    <% if (review.status === 'pending') { %>
+                                        <button type="button" class="btn btn-success review-action" 
+                                                data-review-id="<%= review.id %>" 
+                                                data-action="approve"
+                                                title="Одобрить отзыв">
+                                            <i class="fas fa-check"></i> <span class="btn-text">Одобрить</span>
+                                        </button>
+                                        <button type="button" class="btn btn-danger review-action" 
+                                                data-review-id="<%= review.id %>" 
+                                                data-action="reject"
+                                                title="Отклонить отзыв">
+                                            <i class="fas fa-times"></i> <span class="btn-text">Отклонить</span>
+                                        </button>
+                                    <% } else if (review.status === 'approved') { %>
+                                        <button type="button" class="btn btn-warning review-action" 
+                                                data-review-id="<%= review.id %>" 
+                                                data-action="reject"
+                                                title="Отозвать одобрение">
+                                            <i class="fas fa-undo"></i> <span class="btn-text">Отозвать</span>
+                                        </button>
+                                    <% } else if (review.status === 'rejected') { %>
+                                        <button type="button" class="btn btn-primary review-action" 
+                                                data-review-id="<%= review.id %>" 
+                                                data-action="approve"
+                                                title="Одобрить отзыв">
+                                            <i class="fas fa-check"></i> <span class="btn-text">Одобрить</span>
+                                        </button>
+                                    <% } %>
+                                    
+                                    <button type="button" class="btn btn-secondary review-action" 
+                                            data-review-id="<%= review.id %>" 
+                                            data-action="delete"
+                                            title="Удалить отзыв">
+                                        <i class="fas fa-trash"></i> <span class="btn-text">Удалить</span>
+                                    </button>
+                                    
+                                    <div class="action-status"></div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <div class="no-reviews">
+                        <i class="fas fa-comments"></i>
+                        <h3>Отзывов пока нет</h3>
+                        <p>Пользователи еще не оставляли отзывы на товары.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Простой Магазин. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+    // Инициализация темы для админ-панели
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTheme();
+        console.log('Reviews all admin theme initialized:', localStorage.getItem('theme') || 'light');
+        
+        // Обработка действий с отзывами
+        document.querySelectorAll('.review-action').forEach(button => {
+            button.addEventListener('click', async function() {
+                const reviewId = this.getAttribute('data-review-id');
+                const action = this.getAttribute('data-action');
+                const reviewCard = this.closest('.review-card');
+                const actionStatus = this.parentElement.querySelector('.action-status');
+                const buttonText = this.querySelector('.btn-text');
+                
+                // Сохраняем оригинальный текст кнопки
+                const originalHTML = this.innerHTML;
+                const originalText = buttonText ? buttonText.textContent : '';
+                
+                // Показываем индикатор загрузки
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>' + (buttonText ? ' <span class="btn-text">Обработка...</span>' : '');
+                this.disabled = true;
+                
+                // Скрываем предыдущие сообщения об ошибках
+                if (actionStatus) {
+                    actionStatus.textContent = '';
+                    actionStatus.className = 'action-status';
+                }
+                
+                try {
+                    const response = await fetch(`/admin/reviews/${reviewId}/${action}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // Обновляем интерфейс в зависимости от действия
+                        if (action === 'delete') {
+                            // Плавно скрываем и удаляем карточку
+                            reviewCard.style.opacity = '0';
+                            setTimeout(() => {
+                                reviewCard.remove();
+                                
+                                // Показываем сообщение, если нет больше отзывов
+                                const reviewsList = document.querySelector('.reviews-list');
+                                if (reviewsList && reviewsList.children.length === 0) {
+                                    location.reload();
+                                }
+                            }, 300);
+                        } else {
+                            // Обновляем статус отзыва
+                            const statusBadge = reviewCard.querySelector('.status-badge');
+                            if (statusBadge) {
+                                let newStatus, newStatusText;
+                                
+                                if (action === 'approve') {
+                                    newStatus = 'approved';
+                                    newStatusText = 'Одобрен';
+                                } else {
+                                    newStatus = 'rejected';
+                                    newStatusText = 'Отклонен';
+                                }
+                                
+                                statusBadge.textContent = newStatusText;
+                                statusBadge.className = `status-badge status-${newStatus}`;
+                                
+                                // Обновляем класс карточки
+                                reviewCard.className = reviewCard.className.replace(/review-status-\w+/, `review-status-${newStatus}`);
+                                
+                                // Обновляем кнопки действий
+                                const actionsContainer = reviewCard.querySelector('.review-actions');
+                                if (actionsContainer) {
+                                    if (action === 'approve') {
+                                        actionsContainer.innerHTML = `
+                                            <button type="button" class="btn btn-warning review-action" 
+                                                    data-review-id="${reviewId}" 
+                                                    data-action="reject"
+                                                    title="Отозвать одобрение">
+                                                <i class="fas fa-undo"></i> <span class="btn-text">Отозвать</span>
+                                            </button>
+                                            <button type="button" class="btn btn-secondary review-action" 
+                                                    data-review-id="${reviewId}" 
+                                                    data-action="delete"
+                                                    title="Удалить отзыв">
+                                                <i class="fas fa-trash"></i> <span class="btn-text">Удалить</span>
+                                            </button>
+                                            <div class="action-status"></div>
+                                        `;
+                                    } else {
+                                        actionsContainer.innerHTML = `
+                                            <button type="button" class="btn btn-primary review-action" 
+                                                    data-review-id="${reviewId}" 
+                                                    data-action="approve"
+                                                    title="Одобрить отзыв">
+                                                <i class="fas fa-check"></i> <span class="btn-text">Одобрить</span>
+                                            </button>
+                                            <button type="button" class="btn btn-secondary review-action" 
+                                                    data-review-id="${reviewId}" 
+                                                    data-action="delete"
+                                                    title="Удалить отзыв">
+                                                <i class="fas fa-trash"></i> <span class="btn-text">Удалить</span>
+                                            </button>
+                                            <div class="action-status"></div>
+                                        `;
+                                    }
+                                    
+                                    // Добавляем обработчики событий к новым кнопкам
+                                    actionsContainer.querySelectorAll('.review-action').forEach(btn => {
+                                        btn.addEventListener('click', arguments.callee);
+                                    });
+                                }
+                                
+                                // Показываем сообщение об успехе
+                                if (actionStatus) {
+                                    actionStatus.textContent = `Отзыв успешно ${action === 'approve' ? 'одобрен' : 'отклонен'}`;
+                                    actionStatus.className = 'action-status success';
+                                    setTimeout(() => {
+                                        actionStatus.textContent = '';
+                                        actionStatus.className = 'action-status';
+                                    }, 3000);
+                                }
+                            }
+                        }
+                    } else {
+                        const data = await response.json();
+                        throw new Error(data.error || 'Произошла ошибка при обработке запроса');
+                    }
+                } catch (error) {
+                    console.error('Ошибка при обработке действия:', error);
+                    
+                    // Восстанавливаем кнопку
+                    this.innerHTML = originalHTML;
+                    this.disabled = false;
+                    
+                    // Показываем сообщение об ошибке
+                    if (actionStatus) {
+                        actionStatus.textContent = error.message || 'Произошла ошибка';
+                        actionStatus.className = 'action-status error';
+                    }
+                }
+            });
+        });
+    });
+    </script>
+
+    <style>
+        .reviews-all {
+            margin-top: 2rem;
+        }
+
+        .reviews-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+
+        .stat-card i {
+            font-size: 2rem;
+            color: var(--button-bg);
+        }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-color);
+
+            .reviews-filter {
+                margin-bottom: 2rem;
+            }
+
+            .filter-buttons {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+            }
+
+            .filter-btn {
+                padding: 0.5rem 1rem;
+                border: 1px solid var(--border-color);
+                border-radius: 5px;
+                background: var(--bg-color);
+                color: var(--text-color);
+                text-decoration: none;
+                transition: all 0.3s;
+            }
+            border-radius: 5px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--button-bg);
+            color: white;
+            border-color: var(--button-bg);
+        }
+
+        .reviews-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .review-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+
+        .review-status-pending {
+            border-left: 4px solid #f39c12;
+        }
+
+        .review-status-approved {
+            border-left: 4px solid #27ae60;
+        }
+
+        .review-status-rejected {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .review-info h3 {
+            color: var(--text-color);
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .review-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .review-author,
+        .review-date,
+        .review-moderated {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .review-author i,
+        .review-date i,
+        .review-moderated i {
+            color: var(--button-bg);
+        }
+
+        .review-status-badge {
+            display: flex;
+            align-items: center;
+        }
+
+        .review-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .review-rating i {
+            color: #ffd700;
+            font-size: 1rem;
+        }
+
+        .rating-number {
+            color: var(--text-color);
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .review-content {
+            color: var(--text-color);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .review-content p {
+            margin: 0;
+            padding: 1rem;
+            background: var(--bg-color);
+            border-radius: 5px;
+        }
+
+        .review-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .review-actions .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn:hover {
+            background: var(--button-bg);
+            color: white;
+            border-color: var(--button-bg);
+        }
+
+        .btn-success {
+            background-color: #27ae60 !important;
+            color: white !important;
+        }
+
+        .btn-success:hover {
+            background-color: #229954 !important;
+            color: white !important;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c !important;
+            color: white !important;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b !important;
+            color: white !important;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6 !important;
+            color: white !important;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d !important;
+            color: white !important;
+        }
+
+        .no-reviews {
+            text-align: center;
+            padding: 3rem;
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .no-reviews i {
+            font-size: 3rem;
+            color: var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .no-reviews h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+
+        .no-reviews p {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        /* Поддержка темной темы */
+        [data-theme="dark"] .stat-card,
+        [data-theme="dark"] .review-card,
+        [data-theme="dark"] .no-reviews {
+            background: var(--card-bg);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .filter-btn {
+            background: var(--bg-color);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .review-content p {
+            background: var(--bg-color);
+        }
+
+        [data-theme="dark"] .btn-success,
+        [data-theme="dark"] .btn-danger,
+        [data-theme="dark"] .btn-secondary {
+            background: var(--bg-color) !important;
+            color: var(--text-color) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .btn-success:hover {
+            background: #27ae60 !important;
+            color: white !important;
+        }
+
+        [data-theme="dark"] .btn-danger:hover {
+            background: #e74c3c !important;
+            color: white !important;
+        }
+
+        [data-theme="dark"] .btn-secondary:hover {
+            background: #95a5a6 !important;
+            color: white !important;
+        }
+
+        /* Мобильная адаптивность */
+        @media (max-width: 768px) {
+            .reviews-stats {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 0.5rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+
+            .stat-card i {
+                font-size: 1.5rem;
+            }
+
+            .stat-number {
+                font-size: 1.2rem;
+            }
+
+            .filter-buttons {
+                justify-content: center;
+            }
+
+            .review-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .review-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .review-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .review-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</body>
+</html>

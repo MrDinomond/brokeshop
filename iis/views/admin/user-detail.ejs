@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="/shop">Магазин</a>
+                </div>
+
+                <div class="nav-menu">
+                    <div class="nav-user">
+                        <span>Привет, <%= currentUser %> (<%= userRole %>)!</span>
+                        <div class="nav-links">
+                            <a href="/shop" class="nav-link">
+                                <i class="fas fa-store"></i> Товары
+                            </a>
+                            <a href="/cart" class="nav-link">
+                                <i class="fas fa-shopping-cart"></i> Корзина
+                                <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+                                    <span class="cart-count"><%= cartCount %></span>
+                                <% } %>
+                            </a>
+                            <a href="/cart/orders" class="nav-link">
+                                <i class="fas fa-clipboard-list"></i> Заказы
+                            </a>
+                            <a href="/admin" class="nav-link">
+                                <i class="fas fa-cog"></i> Админка
+                            </a>
+                            <form action="/auth/logout" method="POST" style="display: inline;">
+                                <button type="submit" class="nav-link logout-btn">
+                                    <i class="fas fa-sign-out-alt"></i> Выйти
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="admin-container">
+            <div class="admin-sidebar">
+                <h2>Панель управления</h2>
+                <nav class="admin-nav">
+                    <a href="/admin" class="admin-nav-item">
+                        <i class="fas fa-tachometer-alt"></i> Обзор
+                    </a>
+                    <a href="/admin/users" class="admin-nav-item active">
+                        <i class="fas fa-users"></i> Пользователи
+                    </a>
+                    <a href="/admin/orders" class="admin-nav-item">
+                        <i class="fas fa-clipboard-list"></i> Заказы
+                    </a>
+                    <a href="/admin/products" class="admin-nav-item">
+                        <i class="fas fa-box"></i> Товары
+                    </a>
+                </nav>
+            </div>
+
+            <div class="admin-content">
+                <div class="admin-header">
+                    <h1>Профиль пользователя: <%= user.username %></h1>
+                    <div class="admin-breadcrumb">
+                        <a href="/admin">Главная</a> / <a href="/admin/users">Пользователи</a> / <span><%= user.username %></span>
+                    </div>
+                </div>
+
+                <% if (typeof error !== 'undefined' && error.length > 0) { %>
+                    <div class="alert alert-error">
+                        <%= error %>
+                    </div>
+                <% } %>
+
+                <% if (typeof success !== 'undefined' && success.length > 0) { %>
+                    <div class="alert alert-success">
+                        <%= success %>
+                    </div>
+                <% } %>
+
+                <div class="admin-section">
+                    <div class="user-profile">
+                        <div class="user-profile-header">
+                            <div class="user-avatar">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <div class="user-info">
+                                <h2><%= user.username %></h2>
+                                <p class="user-email"><%= user.email %></p>
+                                <span class="user-role role-<%= user.role %>">
+                                    <%= user.role === 'user' ? 'Пользователь' :
+                                       user.role === 'admin' ? 'Администратор' :
+                                       user.role === 'root' ? 'Супер-админ' : user.role %>
+                                </span>
+                            </div>
+                            <div class="user-actions">
+                                <a href="/admin/users" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left"></i> Назад к списку
+                                </a>
+                                <% if (userRole === 'root') { %>
+                                    <form action="/admin/users/<%= user.id %>/role" method="POST" style="display: inline;">
+                                        <select name="role" onchange="this.form.submit()" class="role-select-inline">
+                                            <option value="user" <%= user.role === 'user' ? 'selected' : '' %>>Пользователь</option>
+                                            <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>Администратор</option>
+                                            <option value="root" <%= user.role === 'root' ? 'selected' : '' %>>Супер-админ</option>
+                                        </select>
+                                    </form>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <div class="user-details">
+                            <div class="detail-section">
+                                <h3>Основная информация</h3>
+                                <div class="detail-grid">
+                                    <div class="detail-item">
+                                        <label>ID пользователя:</label>
+                                        <span><%= user.id %></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <label>Дата регистрации:</label>
+                                        <span><%= new Date(user.created_at).toLocaleString('ru-RU') %></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <label>Последняя активность:</label>
+                                        <span><%= user.last_login ? new Date(user.last_login).toLocaleString('ru-RU') : 'Неизвестно' %></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <h3>Статистика</h3>
+                                <div class="detail-grid">
+                                    <div class="detail-item">
+                                        <label>Количество заказов:</label>
+                                        <span><%= userStats.totalOrders %></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <label>Общая сумма заказов:</label>
+                                        <span><%= userStats.totalRevenue %> ₽</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <label>Статус:</label>
+                                        <span class="status-active">Активен</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2024 Простой Магазин. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+    // Инициализация темы для страницы профиля пользователя
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTheme();
+        console.log('User detail theme initialized:', localStorage.getItem('theme') || 'light');
+    });
+    </script>
+
+    <style>
+        .user-profile {
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .user-profile-header {
+            background: var(--input-bg);
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            background: var(--button-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .user-info h2 {
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .user-email {
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-role {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .role-user { background-color: #95a5a6; color: white; }
+        .role-admin { background-color: #3498db; color: white; }
+        .role-root { background-color: #e74c3c; color: white; }
+
+        .user-actions {
+            margin-left: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .role-select-inline {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        .user-details {
+            padding: 2rem;
+        }
+
+        .detail-section {
+            margin-bottom: 2rem;
+        }
+
+        .detail-section h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .detail-item {
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+        }
+
+        .detail-item label {
+            display: block;
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item span {
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .status-active {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .user-profile-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .user-actions {
+                align-items: center;
+                flex-direction: row;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Дополнительные стили для темной темы */
+        [data-theme="dark"] .user-profile {
+            background: var(--card-bg);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .user-profile-header {
+            background: var(--input-bg);
+            border-bottom-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .detail-item {
+            background: var(--bg-color);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .role-select-inline {
+            background: var(--card-bg);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+    </style>
+</body>
+</html>

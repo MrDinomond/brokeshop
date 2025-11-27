@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модерация отзывов</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="/shop">Магазин</a>
+                </div>
+
+                <div class="nav-menu">
+                    <div class="nav-user">
+                        <span>Привет, <%= user %> (<%= userRole %>)!</span>
+                        <div class="nav-links">
+                            <a href="/shop" class="nav-link">
+                                <i class="fas fa-store"></i> Товары
+                            </a>
+                            <a href="/cart" class="nav-link">
+                                <i class="fas fa-shopping-cart"></i> Корзина
+                                <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+                                    <span class="cart-count"><%= cartCount %></span>
+                                <% } %>
+                            </a>
+                            <a href="/cart/orders" class="nav-link">
+                                <i class="fas fa-clipboard-list"></i> Заказы
+                            </a>
+                            <a href="/admin" class="nav-link active">
+                                <i class="fas fa-cog"></i> Админка
+                            </a>
+                            <form action="/auth/logout" method="POST" style="display: inline;">
+                                <button type="submit" class="nav-link logout-btn">
+                                    <i class="fas fa-sign-out-alt"></i> Выйти
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="admin-container">
+            <div class="admin-sidebar">
+                <h2>Панель управления</h2>
+                <nav class="admin-nav">
+                    <a href="/admin" class="admin-nav-item">
+                        <i class="fas fa-tachometer-alt"></i> Обзор
+                    </a>
+                    <a href="/admin/users" class="admin-nav-item">
+                        <i class="fas fa-users"></i> Пользователи
+                    </a>
+                    <a href="/admin/orders" class="admin-nav-item">
+                        <i class="fas fa-clipboard-list"></i> Заказы
+                    </a>
+                    <a href="/admin/products" class="admin-nav-item">
+                        <i class="fas fa-box"></i> Товары
+                    </a>
+                    <a href="/reviews/admin/moderation" class="admin-nav-item active">
+                        <i class="fas fa-comments"></i> Отзывы
+                    </a>
+                </nav>
+            </div>
+
+            <div class="admin-content">
+                <div class="admin-header">
+                    <h1>Модерация отзывов</h1>
+                    <div class="admin-breadcrumb">
+                        <a href="/admin">Главная</a> / <span>Отзывы</span>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2>Отзывы на модерации</h2>
+                        <p>Проверка и одобрение отзывов пользователей</p>
+                        <div class="section-actions">
+                            <a href="/admin/reviews/all" class="btn btn-secondary">
+                                <i class="fas fa-list"></i> Все отзывы
+                            </a>
+                        </div>
+                    </div>
+
+                    <% if (typeof error !== 'undefined' && error.length > 0) { %>
+                        <div class="alert alert-error">
+                            <%= error %>
+                        </div>
+                    <% } %>
+
+                    <% if (typeof success !== 'undefined' && success.length > 0) { %>
+                        <div class="alert alert-success">
+                            <%= success %>
+                        </div>
+                    <% } %>
+
+                    <% if (reviews.length === 0) { %>
+                        <div class="empty-state">
+                            <i class="fas fa-comments"></i>
+                            <h3>Нет отзывов на модерации</h3>
+                            <p>Новые отзывы будут отображаться здесь.</p>
+                        </div>
+                    <% } else { %>
+                        <div class="reviews-list">
+                            <% reviews.forEach(review => { %>
+                                <div class="review-card">
+                                    <div class="review-header">
+                                        <div class="review-info">
+                                            <h3><%= review.product_name %></h3>
+                                            <p class="review-user">
+                                                <i class="fas fa-user"></i>
+                                                <%= review.username %>
+                                            </p>
+                                            <p class="review-date">
+                                                <i class="fas fa-calendar"></i>
+                                                <%= new Date(review.created_at).toLocaleString('ru-RU') %>
+                                            </p>
+                                        </div>
+                                        <div class="review-rating">
+                                            <% for (let i = 1; i <= 5; i++) { %>
+                                                <i class="fas fa-star <%= i <= review.rating ? 'star-filled' : 'star-empty' %>"></i>
+                                            <% } %>
+                                            <span class="rating-text"><%= review.rating %>/5</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="review-content">
+                                        <p><%= review.comment %></p>
+                                    </div>
+
+                                    <div class="review-status">
+                                        <span class="status-badge status-<%= review.status %>">
+                                            <%= review.status === 'pending' ? 'На модерации' :
+                                               review.status === 'approved' ? 'Одобрен' :
+                                               review.status === 'rejected' ? 'Отклонен' : review.status %>
+                                        </span>
+                                    </div>
+
+                                    <div class="review-actions">
+                                        <button type="button" class="action-btn approve-btn" title="Одобрить отзыв" data-review-id="<%= review.id %>" data-action="approve">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button type="button" class="action-btn reject-btn" title="Отклонить отзыв" data-review-id="<%= review.id %>" data-action="reject">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        <button type="button" class="action-btn delete-btn" title="Удалить отзыв" data-review-id="<%= review.id %>" data-action="delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Простой Магазин. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+    // Инициализация темы для админ-панели отзывов
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTheme();
+        console.log('Reviews admin theme initialized:', localStorage.getItem('theme') || 'light');
+        
+        // Обработка действий с отзывами
+        document.querySelectorAll('.review-actions button').forEach(button => {
+            button.addEventListener('click', async function() {
+                const reviewId = this.getAttribute('data-review-id');
+                const action = this.getAttribute('data-action');
+                const reviewCard = this.closest('.review-card');
+                
+                // Показываем индикатор загрузки
+                const originalHTML = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                this.disabled = true;
+                
+                try {
+                    const response = await fetch(`/admin/reviews/${reviewId}/${action}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // Обновляем интерфейс в зависимости от действия
+                        if (action === 'delete') {
+                            // Плавно скрываем и удаляем карточку
+                            reviewCard.style.opacity = '0';
+                            setTimeout(() => {
+                                reviewCard.remove();
+                                
+                                // Показываем сообщение, если нет больше отзывов
+                                const reviewsList = document.querySelector('.reviews-list');
+                                if (reviewsList && reviewsList.children.length === 0) {
+                                    location.reload(); // Перезагружаем страницу, если отзывов больше нет
+                                }
+                            }, 300);
+                        } else {
+                            // Обновляем статус отзыва
+                            const statusBadge = reviewCard.querySelector('.status-badge');
+                            if (statusBadge) {
+                                statusBadge.textContent = action === 'approve' ? 'Одобрен' : 'Отклонен';
+                                statusBadge.className = `status-badge status-${action === 'approve' ? 'approved' : 'rejected'}`;
+                            }
+                            
+                            // Удаляем кнопки действий
+                            const actions = reviewCard.querySelector('.review-actions');
+                            if (actions) actions.remove();
+                            
+                            // Показываем сообщение об успехе
+                            const message = document.createElement('div');
+                            message.className = 'alert alert-success';
+                            message.style.marginTop = '10px';
+                            message.textContent = `Отзыв успешно ${action === 'approve' ? 'одобрен' : 'отклонен'}`;
+                            reviewCard.appendChild(message);
+                            
+                            // Скрываем сообщение через 3 секунды
+                            setTimeout(() => {
+                                message.style.opacity = '0';
+                                setTimeout(() => message.remove(), 300);
+                            }, 3000);
+                        }
+                    } else {
+                        const data = await response.json();
+                        throw new Error(data.error || 'Произошла ошибка');
+                    }
+                } catch (error) {
+                    console.error('Ошибка при обработке действия:', error);
+                    alert(`Ошибка: ${error.message || 'Не удалось выполнить действие'}`);
+                    
+                    // Восстанавливаем кнопку
+                    this.innerHTML = originalHTML;
+                    this.disabled = false;
+                }
+            });
+        });
+    });
+    </script>
+
+    <style>
+        .reviews-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .review-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .review-info h3 {
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .review-user,
+        .review-date {
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 0.9rem;
+            margin: 0.2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .review-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .star-filled {
+            color: #f39c12;
+        }
+
+        .star-empty {
+            color: #bdc3c7;
+        }
+
+        .rating-text {
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        .review-content {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--bg-color);
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+        }
+
+        .review-content p {
+            color: var(--text-color);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .review-status {
+            margin-bottom: 1rem;
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-pending { background-color: #f39c12; color: white; }
+        .status-approved { background-color: #27ae60; color: white; }
+        .status-rejected { background-color: #e74c3c; color: white; }
+
+        .review-actions {
+            text-align: right;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        .approve-btn {
+            background: #27ae60 !important;
+            color: white !important;
+        }
+
+        .approve-btn:hover {
+            background: #229954 !important;
+        }
+
+        .reject-btn {
+            background: #e74c3c !important;
+            color: white !important;
+        }
+
+        .reject-btn:hover {
+            background: #c0392b !important;
+        }
+
+        .delete-btn {
+            background: #95a5a6 !important;
+            color: white !important;
+        }
+
+        .delete-btn:hover {
+            background: #7f8c8d !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-header h2 {
+            color: var(--text-color);
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .section-header p {
+            color: var(--text-color);
+            opacity: 0.7;
+            margin: 0.5rem 0 0 0;
+            font-size: 0.9rem;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        [data-theme="dark"] .review-card {
+            background: var(--card-bg);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .review-content {
+            background: var(--bg-color);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .action-btn {
+            background: var(--bg-color) !important;
+            color: var(--text-color) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .approve-btn:hover,
+        [data-theme="dark"] .reject-btn:hover,
+        [data-theme="dark"] .delete-btn:hover {
+            opacity: 0.8 !important;
+        }
+
+        .btn:hover {
+            background: var(--button-bg);
+            color: white;
+            border-color: var(--button-bg);
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            border-color: #95a5a6;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+            border-color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .review-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .review-actions {
+                justify-content: center;
+            }
+
+            .section-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .section-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</body>
+</html>

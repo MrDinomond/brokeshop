@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление товарами</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="/shop">Магазин</a>
+                </div>
+
+                <div class="nav-menu">
+                    <div class="nav-user">
+                        <span>Привет, <%= user %> (<%= userRole %>)!</span>
+                        <div class="nav-links">
+                            <a href="/shop" class="nav-link">
+                                <i class="fas fa-store"></i> Товары
+                            </a>
+                            <a href="/cart" class="nav-link">
+                                <i class="fas fa-shopping-cart"></i> Корзина
+                                <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+                                    <span class="cart-count"><%= cartCount %></span>
+                                <% } %>
+                            </a>
+                            <a href="/cart/orders" class="nav-link">
+                                <i class="fas fa-clipboard-list"></i> Заказы
+                            </a>
+                            <a href="/admin" class="nav-link active">
+                                <i class="fas fa-cog"></i> Админка
+                            </a>
+                            <form action="/auth/logout" method="POST" style="display: inline;">
+                                <button type="submit" class="nav-link logout-btn">
+                                    <i class="fas fa-sign-out-alt"></i> Выйти
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="admin-container">
+            <div class="admin-sidebar">
+                <h2>Панель управления</h2>
+                <nav class="admin-nav">
+                    <a href="/admin" class="admin-nav-item">
+                        <i class="fas fa-tachometer-alt"></i> Обзор
+                    </a>
+                    <a href="/admin/users" class="admin-nav-item">
+                        <i class="fas fa-users"></i> Пользователи
+                    </a>
+                    <a href="/admin/orders" class="admin-nav-item">
+                        <i class="fas fa-clipboard-list"></i> Заказы
+                    </a>
+                    <a href="/admin/products" class="admin-nav-item active">
+                        <i class="fas fa-box"></i> Товары
+                    </a>
+                    <a href="/admin/reviews" class="admin-nav-item">
+                        <i class="fas fa-comments"></i> Отзывы
+                    </a>
+                </nav>
+            </div>
+
+            <div class="admin-content">
+                <div class="admin-header">
+                    <h1>Управление товарами</h1>
+                    <div class="admin-breadcrumb">
+                        <a href="/admin">Главная</a> / <span>Товары</span>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2>Все товары</h2>
+                        <p>Добавление, редактирование и удаление товаров</p>
+                        <button class="btn btn-primary" onclick="showAddProductModal()">
+                            <i class="fas fa-plus"></i> Добавить товар
+                        </button>
+                    </div>
+
+                    <% if (typeof error !== 'undefined' && error.length > 0) { %>
+                        <div class="alert alert-error">
+                            <%= error %>
+                        </div>
+                    <% } %>
+
+                    <% if (typeof success !== 'undefined' && success.length > 0) { %>
+                        <div class="alert alert-success">
+                            <%= success %>
+                        </div>
+                    <% } %>
+
+                    <% if (products.length === 0) { %>
+                        <div class="empty-state">
+                            <i class="fas fa-box"></i>
+                            <h3>Нет товаров</h3>
+                            <p>Добавьте первый товар в магазин.</p>
+                        </div>
+                    <% } else { %>
+                        <div class="products-grid">
+                            <% products.forEach(product => { %>
+                                <div class="product-card">
+                                    <div class="product-image">
+                                        <% if (product.image) { %>
+                                            <% const imgSrc = product.image.startsWith('/images/') ? product.image : `/images/${product.image}`; %>
+                                            <img src="<%= imgSrc %>" alt="<%= product.name %>" onerror="this.onerror=null; this.src='/images/default.jpg';">
+                                        <% } else { %>
+                                            <div class="no-image">
+                                                <i class="fas fa-image"></i>
+                                                <span>Нет изображения</span>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                    <div class="product-info">
+                                        <h3><%= product.name %></h3>
+                                        <p class="product-description"><%= product.description %></p>
+                                        <div class="product-meta">
+                                            <span class="product-price"><%= product.price %> ₽</span>
+                                        </div>
+                                    </div>
+                                    <div class="product-actions">
+                                        <button class="action-btn edit-btn" onclick="editProduct(<%= product.id %>, '<%= product.name %>', '<%= product.description %>', <%= product.price %>, '<%= product.image %>')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <form action="/admin/products/<%= product.id %>?_method=DELETE" method="POST" style="display: inline;" onsubmit="return confirm('Вы уверены, что хотите удалить этот товар?')">
+                                            <button type="submit" class="action-btn delete-btn">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно для добавления товара -->
+        <div id="addProductModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Добавить товар</h2>
+                    <button class="modal-close" onclick="hideAddProductModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form action="/admin/products" method="POST">
+                    <div class="form-group">
+                        <label for="productName">Название товара *</label>
+                        <input type="text" id="productName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productDescription">Описание</label>
+                        <textarea id="productDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="productPrice">Цена *</label>
+                        <input type="number" id="productPrice" name="price" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productImage">Изображение</label>
+                        <select id="productImage" name="image" required>
+                            <option value="pizza.jpg">Пицца</option>
+                            <option value="burger.jpg">Бургер</option>
+                            <option value="pasta.jpg">Паста</option>
+                            <option value="greek_salad.jpg">Греческий салат</option>
+                            <option value="steak.jpg">Стейк</option>
+                            <option value="sandwich.jpg">Сэндвич</option>
+                            <option value="salmon_fillet.jpg">Лосось</option>
+                            <option value="hotdog.jpg">Хот-дог</option>
+                            <option value="mashed_potato.jpg">Пюре</option>
+                            <option value="csrambled_egg.jpg">Яичница</option>
+                            <option value="barbecue.jpg">Барбекю</option>
+                            <option value="tom_yum.jpg">Том Ям</option>
+                            <option value="french_fries.jpg">Картофель фри</option>
+                            <option value="grilled_chicken.jpg">Курица гриль</option>
+                            <option value="pete.jpg">Пирог</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn" onclick="hideAddProductModal()">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Добавить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Модальное окно для редактирования товара -->
+        <div id="editProductModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Редактировать товар</h2>
+                    <button class="modal-close" onclick="hideEditProductModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="editProductForm" method="POST">
+                    <input type="hidden" id="editProductId" name="id">
+                    <div class="form-group">
+                        <label for="editProductName">Название товара *</label>
+                        <input type="text" id="editProductName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductDescription">Описание</label>
+                        <textarea id="editProductDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductPrice">Цена *</label>
+                        <input type="number" id="editProductPrice" name="price" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductImage">Изображение</label>
+                        <select id="editProductImage" name="image" required>
+                            <option value="pizza.jpg">Пицца</option>
+                            <option value="burger.jpg">Бургер</option>
+                            <option value="pasta.jpg">Паста</option>
+                            <option value="greek_salad.jpg">Греческий салат</option>
+                            <option value="steak.jpg">Стейк</option>
+                            <option value="sandwich.jpg">Сэндвич</option>
+                            <option value="salmon_fillet.jpg">Лосось</option>
+                            <option value="hotdog.jpg">Хот-дог</option>
+                            <option value="mashed_potato.jpg">Пюре</option>
+                            <option value="csrambled_egg.jpg">Яичница</option>
+                            <option value="barbecue.jpg">Барбекю</option>
+                            <option value="tom_yum.jpg">Том Ям</option>
+                            <option value="french_fries.jpg">Картофель фри</option>
+                            <option value="grilled_chicken.jpg">Курица гриль</option>
+                            <option value="pete.jpg">Пирог</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn" onclick="hideEditProductModal()">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Простой Магазин. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+    // Инициализация темы для админ-панели товаров
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTheme();
+        console.log('Products admin theme initialized:', localStorage.getItem('theme') || 'light');
+    });
+    </script>
+
+    <style>
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 5px 15px var(--shadow);
+            transition: transform 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-image {
+            height: 150px;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .no-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #f5f5f5;
+            color: #999;
+        }
+
+        .no-image i {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .no-image span {
+            font-size: 0.9rem;
+        }
+
+        [data-theme="dark"] .no-image {
+            background-color: #2a2a2a;
+            color: #777;
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-info h3 {
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .product-description {
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-price {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .product-category {
+            background: var(--card-bg);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .product-actions {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        .edit-btn {
+            background: #f39c12;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #e67e22;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        /* Модальные окна */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h2 {
+            color: var(--text-color);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .modal-close:hover {
+            background: var(--input-bg);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Дополнительные стили для полей ввода в темной теме */
+        [data-theme="dark"] .form-group input,
+        [data-theme="dark"] .form-group select,
+        [data-theme="dark"] .form-group textarea {
+            background-color: var(--input-bg) !important;
+            color: var(--text-color) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .form-group input:focus,
+        [data-theme="dark"] .form-group select:focus,
+        [data-theme="dark"] .form-group textarea:focus {
+            border-color: var(--button-bg) !important;
+            box-shadow: 0 0 5px rgba(74, 144, 226, 0.3) !important;
+        }
+
+        [data-theme="dark"] .modal-content {
+            background: var(--card-bg) !important;
+            color: var(--text-color) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .modal-header {
+            border-bottom-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .modal-header h2 {
+            color: var(--text-color) !important;
+        }
+
+        [data-theme="dark"] .form-actions {
+            border-top-color: var(--border-color) !important;
+        }
+    </style>
+
+    <script>
+    function showAddProductModal() {
+        document.getElementById('addProductModal').style.display = 'flex';
+    }
+
+    function hideAddProductModal() {
+        document.getElementById('addProductModal').style.display = 'none';
+        // Очистка формы
+        document.querySelector('#addProductModal form').reset();
+    }
+
+    function editProduct(id, name, description, price, image) {
+        document.getElementById('editProductId').value = id;
+        document.getElementById('editProductName').value = name;
+        document.getElementById('editProductDescription').value = description;
+        document.getElementById('editProductPrice').value = price;
+        
+        // Удаляем префикс /images/ если он есть
+        const imageName = image.startsWith('/images/') ? image.substring(8) : image;
+        document.getElementById('editProductImage').value = imageName;
+
+        // Обновление action формы
+        document.getElementById('editProductForm').action = `/admin/products/${id}`;
+
+        document.getElementById('editProductModal').style.display = 'flex';
+    }
+
+    function hideEditProductModal() {
+        document.getElementById('editProductModal').style.display = 'none';
+    }
+
+    // Закрытие модальных окон при клике на фон
+    document.addEventListener('click', function(e) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+    </script>
+</body>
+</html>

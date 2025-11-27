@@ -1,0 +1,310 @@
+.admin-container {
+    display: flex;
+    min-height: calc(100vh - 80px);
+}
+
+.admin-sidebar {
+    width: 250px;
+    background: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 2rem 0;
+}
+
+.admin-sidebar h2 {
+    color: var(--text-color);
+    padding: 0 2rem;
+    margin-bottom: 2rem;
+    font-size: 1.2rem;
+}
+
+.admin-nav {
+    list-style: none;
+}
+
+.admin-nav-item {
+    display: block;
+    padding: 1rem 2rem;
+    color: var(--text-color);
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.admin-nav-item:hover,
+.admin-nav-item.active {
+    background-color: var(--button-bg);
+    color: white;
+    border-left-color: var(--button-hover);
+}
+
+.admin-content {
+    flex: 1;
+    padding: 2rem;
+    background: var(--bg-color);
+}
+
+.admin-header {
+    margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+}
+
+.admin-breadcrumb {
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px var(--shadow);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--button-bg);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.stat-content h3 {
+    color: var(--text-color);
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.stat-content p {
+    color: var(--text-color);
+    opacity: 0.7;
+    margin: 0;
+}
+
+.admin-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.admin-section {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.admin-section h2 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--input-bg);
+    color: var(--text-color);
+    text-decoration: none;
+    border-radius: 5px;
+    transition: all 0.3s;
+    border: 1px solid var(--border-color);
+}
+
+.quick-action-btn:hover {
+    background: var(--button-bg);
+    color: white;
+    border-color: var(--button-bg);
+}
+
+.quick-action-btn i {
+    width: 20px;
+    text-align: center;
+}
+
+.recent-orders p {
+    color: var(--text-color);
+    opacity: 0.7;
+    text-align: center;
+    padding: 2rem;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.3s;
+}
+
+.order-item:hover {
+    background-color: var(--input-bg);
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.order-id {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.order-user {
+    color: var(--text-color);
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+.order-date {
+    color: var(--text-color);
+    opacity: 0.6;
+    font-size: 0.8rem;
+}
+
+.order-total {
+    font-weight: bold;
+    color: var(--button-bg);
+    font-size: 1.1rem;
+}
+
+/* Стили для полей ввода в админ-панели */
+.admin-container .form-group input,
+.admin-container .form-group select,
+.admin-container .form-group textarea {
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.admin-container .form-group input:focus,
+.admin-container .form-group select:focus,
+.admin-container .form-group textarea:focus {
+    border-color: var(--button-bg);
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+/* Дополнительные стили для темной темы в админ-панели */
+[data-theme="dark"] .admin-sidebar {
+    background: var(--card-bg);
+    border-right-color: var(--border-color);
+}
+
+[data-theme="dark"] .admin-content {
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .admin-header h1,
+[data-theme="dark"] .admin-breadcrumb,
+[data-theme="dark"] .stat-content h3,
+[data-theme="dark"] .stat-content p,
+[data-theme="dark"] .admin-section h2,
+[data-theme="dark"] .recent-orders p {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .admin-section {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    box-shadow: 0 5px 15px var(--shadow);
+}
+
+[data-theme="dark"] .quick-action-btn {
+    background: var(--input-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .order-item:hover {
+    background-color: var(--input-bg);
+}
+
+[data-theme="dark"] .order-id,
+[data-theme="dark"] .order-user,
+[data-theme="dark"] .order-date {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .order-total {
+    color: var(--button-bg);
+}
+
+/* Стили для полей ввода в темной теме */
+[data-theme="dark"] .admin-container .form-group input,
+[data-theme="dark"] .admin-container .form-group select,
+[data-theme="dark"] .admin-container .form-group textarea {
+    background-color: var(--input-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .admin-container .form-group input:focus,
+[data-theme="dark"] .admin-container .form-group select:focus,
+[data-theme="dark"] .admin-container .form-group textarea:focus {
+    border-color: var(--button-bg) !important;
+    box-shadow: 0 0 5px rgba(74, 144, 226, 0.3) !important;
+}
+
+/* Мобильная адаптивность для заказов */
+@media (max-width: 768px) {
+    .order-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .order-info {
+        width: 100%;
+    }
+
+    .order-total {
+        align-self: flex-end;
+        font-size: 1rem;
+    }
+
+    .order-date {
+        font-size: 0.7rem;
+    }
+}

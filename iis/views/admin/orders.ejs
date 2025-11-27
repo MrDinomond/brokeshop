@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление заказами</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="/shop">Магазин</a>
+                </div>
+
+                <div class="nav-menu">
+                    <div class="nav-user">
+                        <span>Привет, <%= user %> (<%= userRole %>)!</span>
+                        <div class="nav-links">
+                            <a href="/shop" class="nav-link">
+                                <i class="fas fa-store"></i> Товары
+                            </a>
+                            <a href="/cart" class="nav-link">
+                                <i class="fas fa-shopping-cart"></i> Корзина
+                                <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+                                    <span class="cart-count"><%= cartCount %></span>
+                                <% } %>
+                            </a>
+                            <a href="/cart/orders" class="nav-link">
+                                <i class="fas fa-clipboard-list"></i> Заказы
+                            </a>
+                            <a href="/admin" class="nav-link active">
+                                <i class="fas fa-cog"></i> Админка
+                            </a>
+                            <form action="/auth/logout" method="POST" style="display: inline;">
+                                <button type="submit" class="nav-link logout-btn">
+                                    <i class="fas fa-sign-out-alt"></i> Выйти
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="admin-container">
+            <div class="admin-sidebar">
+                <h2>Панель управления</h2>
+                <nav class="admin-nav">
+                    <a href="/admin" class="admin-nav-item">
+                        <i class="fas fa-tachometer-alt"></i> Обзор
+                    </a>
+                    <a href="/admin/users" class="admin-nav-item">
+                        <i class="fas fa-users"></i> Пользователи
+                    </a>
+                    <a href="/admin/orders" class="admin-nav-item active">
+                        <i class="fas fa-clipboard-list"></i> Заказы
+                    </a>
+                    <a href="/admin/products" class="admin-nav-item">
+                        <i class="fas fa-box"></i> Товары
+                    </a>
+                    <a href="/admin/reviews" class="admin-nav-item">
+                        <i class="fas fa-comments"></i> Отзывы
+                    </a>
+                </nav>
+            </div>
+
+            <div class="admin-content">
+                <div class="admin-header">
+                    <h1>Управление заказами</h1>
+                    <div class="admin-breadcrumb">
+                        <a href="/admin">Главная</a> / <span>Заказы</span>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2>Все заказы</h2>
+                        <p>Управление статусами и просмотр заказов</p>
+                    </div>
+
+                    <% if (typeof error !== 'undefined' && error.length > 0) { %>
+                        <div class="alert alert-error">
+                            <%= error %>
+                        </div>
+                    <% } %>
+
+                    <% if (typeof success !== 'undefined' && success.length > 0) { %>
+                        <div class="alert alert-success">
+                            <%= success %>
+                        </div>
+                    <% } %>
+
+                    <% if (orders.length === 0) { %>
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>Нет заказов</h3>
+                            <p>Заказы будут отображаться здесь после оформления.</p>
+                        </div>
+                    <% } else { %>
+                        <div class="orders-list">
+                            <% orders.forEach(order => { %>
+                                <div class="order-card">
+                                    <div class="order-header">
+                                        <div class="order-info">
+                                            <h3>Заказ №<%= order.id %></h3>
+                                            <p class="order-user">
+                                                <i class="fas fa-user"></i>
+                                                <%= order.username %>
+                                            </p>
+                                            <p class="order-date">
+                                                <i class="fas fa-calendar"></i>
+                                                <%= new Date(order.created_at).toLocaleDateString('ru-RU') %>
+                                            </p>
+                                        </div>
+                                        <div class="order-status">
+                                            <form action="/admin/orders/<%= order.id %>/status" method="POST" class="status-form">
+                                                <select name="status" onchange="this.form.submit()" class="status-select">
+                                                    <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>В обработке</option>
+                                                    <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>Подтвержден</option>
+                                                    <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Отправлен</option>
+                                                    <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Доставлен</option>
+                                                    <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Отменен</option>
+                                                </select>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <div class="order-total">
+                                        <strong>Сумма: <%= order.total %> ₽</strong>
+                                    </div>
+
+                                    <div class="order-actions">
+                                        <button class="action-btn view-btn" onclick="toggleOrderDetails(<%= order.id %>)">
+                                            <i class="fas fa-eye"></i>
+                                            Подробности
+                                        </button>
+                                    </div>
+
+                                    <div class="order-details" id="order-details-<%= order.id %>" style="display: none;">
+                                        <div class="order-details-content">
+                                            <p><strong>Пользователь:</strong> <%= order.username %></p>
+                                            <p><strong>Дата создания:</strong> <%= new Date(order.created_at).toLocaleString('ru-RU') %></p>
+                                            <p><strong>Сумма заказа:</strong> <%= order.total %> ₽</p>
+                                            <p><strong>Статус:</strong>
+                                                <span class="status-badge status-<%= order.status %>">
+                                                    <%= order.status === 'pending' ? 'В обработке' :
+                                                       order.status === 'confirmed' ? 'Подтвержден' :
+                                                       order.status === 'shipped' ? 'Отправлен' :
+                                                       order.status === 'delivered' ? 'Доставлен' :
+                                                       order.status === 'cancelled' ? 'Отменен' : order.status %>
+                                                </span>
+                                            </p>
+
+                                            <% if (order.items && order.items.length > 0) { %>
+                                                <div class="order-items">
+                                                    <h4>Товары в заказе:</h4>
+                                                    <div class="items-list">
+                                                        <% order.items.forEach(item => { %>
+                                                            <div class="item-row">
+                                                                <div class="item-info">
+                                                                    <img src="/images/<%= item.image %>" alt="<%= item.name %>" class="item-image">
+                                                                    <div class="item-details">
+                                                                        <h5><%= item.name %></h5>
+                                                                        <p class="item-description"><%= item.description %></p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="item-quantity">
+                                                                    <span class="quantity">Кол-во: <%= item.quantity %></span>
+                                                                    <span class="price"><%= item.price %> ₽</span>
+                                                                </div>
+                                                            </div>
+                                                        <% }) %>
+                                                    </div>
+                                                </div>
+                                            <% } else { %>
+                                                <div class="demo-notice">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    В этом заказе нет товаров.
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Простой Магазин. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+    // Инициализация темы для админ-панели заказов
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTheme();
+        console.log('Orders admin theme initialized:', localStorage.getItem('theme') || 'light');
+    });
+    </script>
+
+    <style>
+        .orders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .order-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .order-info h3 {
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .order-user,
+        .order-date {
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 0.9rem;
+            margin: 0.2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-form {
+            margin: 0;
+        }
+
+        .status-select {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .status-select:focus {
+            outline: none;
+            border-color: var(--button-bg);
+        }
+
+        /* Дополнительные стили для темной темы */
+        [data-theme="dark"] .status-select {
+            background: var(--input-bg) !important;
+            color: var(--text-color) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .status-select:focus {
+            border-color: var(--button-bg) !important;
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-pending { background-color: #f39c12; color: white; }
+        .status-confirmed { background-color: #3498db; color: white; }
+        .status-shipped { background-color: #9b59b6; color: white; }
+        .status-delivered { background-color: #27ae60; color: white; }
+        .status-cancelled { background-color: #e74c3c; color: white; }
+
+        .order-total {
+            text-align: right;
+            font-size: 1.1rem;
+            color: #e74c3c;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .order-actions {
+            text-align: right;
+        }
+
+        .action-btn {
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+        }
+
+        .action-btn:hover {
+            background: var(--button-hover);
+        }
+
+        .order-details {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .order-details-content p {
+            color: var(--text-color);
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .demo-notice {
+            background: var(--alert-success-bg);
+            color: var(--alert-success-text);
+            border: 1px solid var(--alert-success-border);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .demo-notice i {
+            margin-top: 0.2rem;
+            flex-shrink: 0;
+        }
+
+        /* Стили для товаров в заказе */
+        .order-items {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .order-items h4 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.8rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+        }
+
+        .item-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex: 1;
+        }
+
+        .item-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+        }
+
+        .item-details h5 {
+            color: var(--text-color);
+            margin: 0 0 0.3rem 0;
+            font-size: 1rem;
+        }
+
+        .item-description {
+            color: var(--text-color);
+            opacity: 0.7;
+            margin: 0;
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+
+        .item-quantity {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.3rem;
+        }
+
+        .quantity {
+            color: var(--text-color);
+            opacity: 0.8;
+            font-size: 0.8rem;
+        }
+
+        .price {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .order-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .order-actions,
+            .order-total {
+                text-align: left;
+            }
+
+            .item-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .item-info {
+                width: 100%;
+            }
+
+            .item-quantity {
+                align-items: flex-start;
+                flex-direction: row;
+                justify-content: space-between;
+                width: 100%;
+            }
+        }
+    </style>
+
+    <script>
+    function toggleOrderDetails(orderId) {
+        const details = document.getElementById(`order-details-${orderId}`);
+        const btn = details.parentElement.querySelector('.view-btn');
+
+        if (details.style.display === 'none') {
+            details.style.display = 'block';
+            btn.innerHTML = '<i class="fas fa-eye-slash"></i> Скрыть';
+        } else {
+            details.style.display = 'none';
+            btn.innerHTML = '<i class="fas fa-eye"></i> Подробности';
+        }
+    }
+    </script>
+</body>
+</html>

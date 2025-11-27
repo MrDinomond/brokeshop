@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/auth.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+    <main>
+        <% if (typeof error !== 'undefined' && error.length > 0) { %>
+            <div class="alert alert-error">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <% if (typeof success !== 'undefined' && success.length > 0) { %>
+            <div class="alert alert-success">
+                <%= success %>
+            </div>
+        <% } %>
+
+        <div class="auth-container">
+            <div class="auth-card">
+                <h1>Вход</h1>
+
+                <form action="/auth/login" method="POST">
+                    <div class="form-group">
+                        <label for="username">Имя пользователя:</label>
+                        <input type="text" id="username" name="username" required autocomplete="username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Пароль:</label>
+                        <input type="password" id="password" name="password" required autocomplete="current-password">
+                    </div>
+
+                    <div class="form-group" style="margin: 1rem 0;">
+                        <label class="checkbox-label" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                            <div style="position: relative; flex-shrink: 0; margin-top: 2px;">
+                                <input type="checkbox" id="privacyAgreement" name="privacyAgreement" required 
+                                       style="position: absolute; opacity: 0; width: 20px; height: 20px; margin: 0; cursor: pointer;">
+                                <span style="display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border-color); border-radius: 4px; background: var(--bg-color); transition: all 0.3s;"></span>
+                            </div>
+                            <span style="line-height: 1.4; font-size: 0.9rem;">Я соглашаюсь с <a href="/auth/privacy" target="_blank">политикой конфиденциальности</a></span>
+                        </label>
+                    </div>
+                    <style>
+                        #privacyAgreement:checked + span {
+                            background: var(--button-bg);
+                            border-color: var(--button-bg);
+                        }
+                        #privacyAgreement:checked + span::after {
+                            content: '✓';
+                            position: absolute;
+                            left: 5px;
+                            top: 0;
+                            color: white;
+                            font-size: 14px;
+                        }
+                    </style>
+
+                    <button type="submit" id="loginBtn" class="auth-btn" disabled>Войти</button>
+                </form>
+
+                <p class="auth-link">
+                    Нет аккаунта? <a href="/auth/register">Зарегистрируйтесь</a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/script.js"></script>
+    <script>
+    // Инициализация темы для страницы входа
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTheme();
+        console.log('Login theme initialized:', localStorage.getItem('theme') || 'light');
+
+        // Управление кнопкой входа в зависимости от галочки согласия
+        const privacyCheckbox = document.getElementById('privacyAgreement');
+        const loginBtn = document.getElementById('loginBtn');
+
+        function updateLoginButton() {
+            if (privacyCheckbox.checked) {
+                loginBtn.disabled = false;
+                loginBtn.style.opacity = '1';
+                loginBtn.style.cursor = 'pointer';
+            } else {
+                loginBtn.disabled = true;
+                loginBtn.style.opacity = '0.6';
+                loginBtn.style.cursor = 'not-allowed';
+            }
+        }
+
+        // Проверяем состояние при загрузке страницы
+        updateLoginButton();
+
+        // Слушаем изменения чекбокса
+        privacyCheckbox.addEventListener('change', updateLoginButton);
+    });
+    </script>
+</body>
+</html>
