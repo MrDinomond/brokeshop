@@ -13,11 +13,12 @@ router.get('/', requireAuth, async (req, res) => {
         const cartCount = await getCartCount(req.session.userId);
 
         res.render('shop/index', {
-            title: 'Магазин',
+            title: 'BrokeShop',
             products,
             categories,
             user: req.session.username,
             search: '',
+            currentPath: '/shop',
             selectedCategory: '',
             cartCount
         });
@@ -78,7 +79,7 @@ router.get('/search', requireAuth, async (req, res) => {
         const cartCount = await getCartCount(req.session.userId);
 
         res.render('shop/index', {
-            title: 'Магазин',
+            title: query ? `BrokeShop - Результаты поиска: ${query}` : category ? `BrokeShop - Категория: ${category}` : 'BrokeShop',
             products,
             categories,
             user: req.session.username,

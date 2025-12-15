@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'Туториалы - BrokeShop' %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/tutorials.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a6baf;
+            --primary-hover: #3a5a9f;
+            --background: #ffffff;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-light: #666666;
+            --border-color: #e0e0e0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --button-bg: #4a6baf;
+            --button-hover: #3a5a9f;
+        }
+
+        .dark-theme {
+            --background: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #f0f0f0;
+            --text-light: #b0b0b0;
+            --border-color: #3d3d3d;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --header-bg: #121212;
+            --nav-hover: #333333;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .tutorials-page {
+            padding: 2rem 0;
+            min-height: calc(100vh - 300px);
+            background-color: var(--background);
+        }
+        
+        .tutorials-page h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--text-color);
+        }
+        
+        .tutorials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 1rem;
+        }
+        
+        .tutorial-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+        }
+        
+        .tutorial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+        
+        .tutorial-icon {
+            font-size: 2.5rem;
+            color: var(--button-bg);
+            margin-bottom: 1rem;
+        }
+        .tutorial-card h3 {
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+        }
+        
+        .tutorial-card p {
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+        
+        /* Security Card Styles */
+        .security-card {
+            background: var(--card-bg);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .security-content {
+            background: var(--background);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .security-content h4 {
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .security-content pre {
+            background: #2d2d2d;
+            color: #f0f0f0;
+            padding: 0.75rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 0.5rem 0 1rem;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+        
+        .security-content code {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        /* Security Banner Styles */
+        .security-banner {
+            background: linear-gradient(135deg, #4a6bdf 0%, #3a56c8 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .security-banner-content {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .security-banner i {
+            font-size: 2.5rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .security-banner h3 {
+            margin: 0 0 0.5rem 0;
+            color: white;
+            font-size: 1.25rem;
+        }
+        
+        .security-banner p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        
+        .security-banner .btn-primary {
+            background: white;
+            color: #4a6bdf;
+            font-weight: 600;
+            padding: 0.5rem 1.25rem;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-left: auto;
+        }
+        
+        .security-banner .btn-primary:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .security-banner-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .security-banner .btn-primary {
+                margin: 0.75rem 0 0 0;
+                width: 100%;
+                text-align: center;
+            }
+        }
+        
+        .btn-primary {
+            background-color: var(--button-bg);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--button-hover);
+            color: white;
+        }
+        
+        /* Navigation styles */
+        header {
+            background-color: var(--header-bg, #f8f9fa);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1000;
+        }
+
+        .navbar {
+            padding: 1rem 0;
+            background-color: transparent !important;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand a {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-link:hover {
+            background-color: var(--nav-hover, #f0f0f0);
+            color: var(--primary-color);
+        }
+        
+        .nav-link.active {
+            color: var(--primary-color);
+            font-weight: 500;
+            background-color: var(--nav-hover, #f0f0f0);
+        }
+
+        .cart-link {
+            position: relative;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        /* Footer styles */
+        footer {
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        
+        .footer-section h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+        
+        .footer-section p, 
+        .footer-section a {
+            color: var(--text-light);
+            transition: color 0.3s;
+        }
+        
+        .footer-section a:hover {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Переключатель темы -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+   <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="/shop">BrokeShop</a>
+                </div>
+
+                <div class="nav-menu">
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <div class="nav-user">
+                            <span>Привет, <%= user %>!</span>
+                            <div class="nav-links">
+                                <a href="/shop" class="nav-link">
+                                    <i class="fas fa-store"></i> Товары
+                                </a>
+                                <a href="/cart" class="nav-link">
+                                    <i class="fas fa-shopping-cart"></i> Корзина
+                                    <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+                                        <span class="cart-count"><%= cartCount %></span>
+                                    <% } %>
+                                </a>
+                                <a href="/cart/orders" class="nav-link">
+                                    <i class="fas fa-clipboard-list"></i> Заказы
+                                </a>
+                                <% if (typeof userRole !== 'undefined' && (userRole === 'admin' || userRole === 'root')) { %>
+                                    <a href="/admin" class="nav-link">
+                                        <i class="fas fa-cog"></i> Админ-панель
+                                    </a>
+                                <% } %>
+                                <form action="/auth/logout" method="POST" style="display: inline;">
+                                    <button type="submit" class="nav-link logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Выйти
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <div class="nav-links">
+                            <a href="/auth/login" class="nav-link">Вход</a>
+                            <a href="/auth/register" class="nav-link">Регистрация</a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tutorials-page">
+        <div class="container">
+            <h1>Туториалы BrokeShop</h1>
+            
+            <div class="security-banner">
+                <div class="security-banner-content">
+                    <i class="fas fa-shield-alt"></i>
+                    <div>
+                        <h3>Полное руководство по безопасности веб-приложений</h3>
+                        <p>Исчерпывающее руководство по уязвимостям и методам защиты</p>
+                    </div>
+                    <a href="/tutorials/security-guide" class="btn btn-primary">Открыть руководство</a>
+                </div>
+            </div>
+            <div class="tutorials-grid">
+                <!-- Tutorial Card 1 -->
+                <div class="tutorial-card">
+                    <div class="tutorial-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3>Как сделать заказ</h3>
+                    <p>Пошаговая инструкция по оформлению заказа в нашем магазине.</p>
+                    <a href="/tutorials/order-guide" class="btn btn-primary">Читать</a>
+                </div>
+
+                <div class="tutorial-card">
+                    <div class="tutorial-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h3>Способы оплаты</h3>
+                    <p>Узнайте о доступных способах оплаты в BrokeShop.</p>
+                    <a href="/tutorials/payment-methods" class="btn btn-primary">Читать</a>
+                </div>
+
+                <div class="tutorial-card">
+                    <div class="tutorial-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h3>Доставка</h3>
+                    <p>Всё о вариантах доставки и сроках получения заказов.</p>
+                    <a href="/tutorials/delivery" class="btn btn-primary">Читать</a>
+                </div>
+
+                <div class="tutorial-card">
+                    <div class="tutorial-icon">
+                        <i class="fas fa-undo"></i>
+                    </div>
+                    <h3>Возврат и обмен</h3>
+                    <p>Как оформить возврат или обмен товара в BrokeShop.</p>
+                    <a href="/tutorials/returns" class="btn btn-primary">Читать</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2025 BrokeShop. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Функция переключения темы
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('dark-theme');
+            
+            const isDark = body.classList.contains('dark-theme');
+            localStorage.setItem('darkTheme', isDark);
+            
+            const icon = document.querySelector('.theme-toggle i');
+            if (isDark) {
+                icon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                icon.classList.replace('fa-sun', 'fa-moon');
+            }
+            
+            // Обновляем стили для всех карточек
+            document.querySelectorAll('.tutorial-card').forEach(card => {
+                card.style.backgroundColor = isDark ? '#2d2d2d' : '#ffffff';
+                card.style.borderColor = isDark ? '#3d3d3d' : '#e0e0e0';
+            });
+        }
+
+        // Проверка сохраненной темы при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            const isDark = localStorage.getItem('darkTheme') === 'true';
+            const body = document.body;
+            const icon = document.querySelector('.theme-toggle i');
+            
+            if (isDark) {
+                body.classList.add('dark-theme');
+                icon.classList.replace('fa-moon', 'fa-sun');
+            }
+            
+            // Применяем тему к body, чтобы все дочерние элементы унаследовали стили
+            body.style.display = 'block';
+        });
+    </script>
+</body>
+</html>
+
+
+</style>

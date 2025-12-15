@@ -58,11 +58,13 @@ initDatabase()
         const shopRoutes = require('./routes/shop');
         const cartRoutes = require('./routes/cart');
         const adminRoutes = require('./routes/admin');
+        const tutorialsRoutes = require('./routes/tutorials');
 
         app.use('/auth', authRoutes);
         app.use('/shop', shopRoutes);
         app.use('/cart', cartRoutes);
         app.use('/admin', adminRoutes);
+        app.use('/tutorials', tutorialsRoutes);
 
         // Главная страница
         app.get('/', (req, res) => {

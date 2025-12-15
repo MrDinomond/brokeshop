@@ -1,0 +1,95 @@
+/* Tutorials Page Styles */
+
+/* Using variables from main style.css */
+:root {
+    --primary-color: var(--button-bg);
+    --primary-hover: var(--button-hover);
+    --background: var(--bg-color);
+    --card-bg: var(--card-bg);
+    --text-color: var(--text-color);
+    --text-light: #666666;
+    --border-color: var(--border-color);
+    --shadow-color: var(--shadow);
+    --header-bg: var(--navbar-bg);
+    --nav-hover: rgba(255, 255, 255, 0.1);
+}
+
+/* Dark theme is already handled by the main style.css */
+
+/* Tutorials Page Specific Styles */
+.tutorials-page {
+    padding: 2rem 0;
+    min-height: calc(100vh - 300px);
+    background-color: var(--background);
+}
+
+.tutorials-page h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--text-color);
+}
+
+.tutorials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
+}
+
+.tutorial-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+}
+
+.tutorial-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.tutorial-icon {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.tutorial-card h3 {
+    color: var(--text-color);
+    margin-bottom: 0.75rem;
+}
+
+.tutorial-card p {
+    color: var(--text-light);
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.6rem 1.5rem;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .tutorials-grid {
+        grid-template-columns: 1fr;
+    }
+}
